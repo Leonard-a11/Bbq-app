@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kleine witte thermometer voor de statusbalk -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#FFFFFFFF"
+        android:pathData="M12,2C10.34,2 9,3.34 9,5v8.54C7.78,14.4 7,15.82 7,17.4 7,20.16 9.24,22.4 12,22.4s5,-2.24 5,-5c0,-1.58 -0.78,-3 -2,-3.86V5c0,-1.66 -1.34,-3 -3,-3zM12,3.8c0.66,0 1.2,0.54 1.2,1.2v9.5l0.45,0.27c0.93,0.56 1.55,1.56 1.55,2.63 0,1.77 -1.43,3.2 -3.2,3.2s-3.2,-1.43 -3.2,-3.2c0,-1.07 0.62,-2.07 1.55,-2.63L10.8,14.5V5c0,-0.66 0.54,-1.2 1.2,-1.2zM11.1,8v7.3c-0.95,0.37 -1.6,1.28 -1.6,2.3 0,1.38 1.12,2.5 2.5,2.5s2.5,-1.12 2.5,-2.5c0,-1.02 -0.65,-1.93 -1.6,-2.3V8z"/>
+</vector>

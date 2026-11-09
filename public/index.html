@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>BBQ Thermometer</title>
-  <meta name="theme-color" content="#16181d">
+  <meta name="theme-color" content="#0e0f12">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icoon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icoon-192.png">
@@ -12,144 +12,204 @@
 </head>
 <body>
   <header class="kop">
-    <h1>BBQ Thermometer</h1>
+    <div class="merk">
+      <svg viewBox="0 0 24 24" class="vlam" aria-hidden="true"><path d="M12 2c1 3.5-1.5 5-1.5 7.5 0 1.4 1 2.5 2.3 2.5 1.5 0 2.2-1.2 2.2-2.6 0-.6-.1-1.2-.3-1.7C17.4 9.4 19 12 19 14.6 19 18.7 15.9 22 12 22s-7-3.3-7-7.4C5 9.3 10.2 6.7 12 2z"/></svg>
+      <span>BBQ Thermometer</span>
+    </div>
     <div class="kop-rechts">
-      <span id="status" class="pil">Niet verbonden</span>
       <span id="batterij" class="pil" hidden></span>
-      <button id="eenheid" class="pil knop-pil" title="Wissel °C / °F">°C</button>
+      <span id="status" class="pil"><i class="stip"></i><span>Niet verbonden</span></span>
     </div>
   </header>
 
-  <nav class="tabs">
-    <button class="tab actief" data-tab="live">Live</button>
-    <button class="tab" data-tab="historie">Historie</button>
-  </nav>
-
   <main>
-    <!-- LIVE -->
-    <section id="tab-live">
+    <!-- ================= LIVE ================= -->
+    <section id="tab-live" class="tab-paneel">
       <div id="alarm" class="alarm" hidden>
-        <div id="alarm-tekst"></div>
-        <button id="alarm-stop" class="knop knop-licht">Alarm uit</button>
+        <div class="alarm-bel">🔔</div>
+        <div id="alarm-tekst" class="alarm-tekst"></div>
+        <button id="alarm-stop" class="alarm-knop">Stop</button>
       </div>
 
       <div id="verbind-kaart" class="kaart verbind">
-        <p>Zet Bluetooth aan op je telefoon en zet de thermometer aan.</p>
+        <div class="verbind-gloed"></div>
+        <svg viewBox="0 0 24 24" class="verbind-vlam" aria-hidden="true"><path d="M12 2c1 3.5-1.5 5-1.5 7.5 0 1.4 1 2.5 2.3 2.5 1.5 0 2.2-1.2 2.2-2.6 0-.6-.1-1.2-.3-1.7C17.4 9.4 19 12 19 14.6 19 18.7 15.9 22 12 22s-7-3.3-7-7.4C5 9.3 10.2 6.7 12 2z"/></svg>
+        <h2 id="verbind-titel">Klaar om te stoken?</h2>
+        <p id="verbind-tekst">Zet de thermometer aan en verbind. Alles wordt automatisch bewaard, ook als de verbinding even wegvalt.</p>
         <button id="verbind" class="knop knop-groot">Verbind thermometer</button>
-        <button id="verbind-alles" class="link">Thermometer staat niet in de lijst? Toon álle Bluetooth-apparaten</button>
-        <button id="demo" class="link">of probeer de demo (zonder thermometer)</button>
-        <p id="geen-bt" class="klein waarschuwing" hidden>
-          Deze browser kan geen Bluetooth gebruiken. Open deze pagina in <b>Chrome</b> zelf
-          (niet via een link in WhatsApp/mail, en niet in Samsung Internet).
-        </p>
-        <p id="bt-uit" class="klein waarschuwing" hidden>
-          Chrome ziet geen Bluetooth. Staat Bluetooth aan op je telefoon?
-        </p>
-        <details class="hulp">
-          <summary>Lukt het niet? Loop dit even na</summary>
-          <ol>
-            <li><b>Sluit de Inkbird-app helemaal af</b> (overzicht van open apps → wegvegen).
-              Zolang die verbonden is, is de thermometer onzichtbaar voor andere apps.</li>
-            <li>Zet <b>Bluetooth</b> én <b>Locatie</b> aan (snelmenu bovenaan het scherm).</li>
-            <li>Geef Chrome toestemming: Instellingen → Apps → Chrome → Rechten →
-              <b>Apparaten in de buurt</b> en <b>Locatie</b> op "Toestaan".</li>
-            <li>Zet de thermometer uit en weer aan, en houd de telefoon er dichtbij.</li>
-            <li>Nog steeds niets? Kies "Toon álle Bluetooth-apparaten" en zoek een naam als
-              iBBQ, IBT, Inkbird of "Onbekend apparaat".</li>
-          </ol>
-        </details>
+        <button id="verbind-alles" class="link">Staat hij niet in de lijst? Toon álle Bluetooth-apparaten</button>
+        <button id="demo" class="link">Probeer de demo</button>
+        <p id="geen-bt" class="klein waarschuwing" hidden>Deze browser kan geen Bluetooth gebruiken. Gebruik de Android-app of Chrome.</p>
+        <p id="bt-uit" class="klein waarschuwing" hidden>Bluetooth staat uit.</p>
       </div>
 
       <div id="diagnose" class="kaart" hidden>
         <b>Deze thermometer praat anders dan verwacht</b>
-        <p class="klein grijs">Verbinden lukte, maar hij gebruikt niet het bekende Inkbird-BBQ-protocol.
-          Kopieer onderstaande gegevens en stuur ze door (samen met het modelnummer), dan kan de app erop worden aangepast.</p>
-        <pre id="diagnose-tekst"></pre>
-        <div class="rij-knoppen">
-          <button id="diagnose-kopieer" class="knop">Kopieer gegevens</button>
-        </div>
+        <p class="klein grijs">Kopieer de gegevens en stuur ze door, dan kan de app erop worden aangepast.</p>
+        <pre id="diagnose-tekst" class="log-pre"></pre>
+        <div class="rij-knoppen"><button id="diagnose-kopieer" class="knop">Kopieer gegevens</button></div>
       </div>
 
-      <div id="voelers" class="voelers"></div>
+      <div id="pauze" class="kaart pauze" hidden>
+        <div><b>Sessie bewaard ✓</b><span class="klein grijs">De temperaturen zie je nog, maar worden niet opgeslagen tot je een nieuwe sessie start.</span></div>
+        <button id="nieuwe-sessie" class="knop">Nieuwe sessie</button>
+      </div>
 
-      <div class="kaart" id="grafiek-kaart" hidden>
+      <div id="sessie" class="sessie" hidden>
+        <div class="sessie-boven">
+          <button id="sessie-naam" class="sessie-naam" title="Sessie instellen"></button>
+          <div id="sessie-klok" class="sessie-klok">0:00:00</div>
+        </div>
+        <div id="sessie-chips" class="chips"></div>
+      </div>
+
+      <div id="plan" class="plan" hidden></div>
+      <div id="adviezen" class="adviezen"></div>
+      <div id="voelers" class="voelers"></div>
+      <div id="los-voelers" class="los-voelers"></div>
+
+      <div id="acties" class="acties" hidden>
+        <button id="knop-gebeurtenis" class="actie"><span>＋</span>Gebeurtenis</button>
+        <button id="knop-timer" class="actie"><span>⏱</span>Timer</button>
+        <button id="knop-sessie" class="actie"><span>⚙</span>Sessie</button>
+      </div>
+
+      <div id="timers" class="timers"></div>
+
+      <div id="grafiek-kaart" class="kaart" hidden>
         <div class="grafiek-kop">
-          <div class="bereik" id="bereik">
-            <button data-min="15">15 min</button>
-            <button data-min="60" class="actief">1 uur</button>
-            <button data-min="240">4 uur</button>
+          <div class="segment" id="bereik">
+            <button data-min="30">30m</button>
+            <button data-min="120" class="actief">2u</button>
+            <button data-min="480">8u</button>
             <button data-min="0">Alles</button>
           </div>
         </div>
+        <div id="legenda" class="legenda"></div>
         <div class="grafiek-vak">
           <canvas id="grafiek"></canvas>
           <div class="tip" id="grafiek-tip" hidden></div>
         </div>
       </div>
 
-      <div class="kaart sessie" id="sessie-kaart" hidden>
-        <div>
-          <div class="klein grijs">Sessie (wordt automatisch bewaard)</div>
-          <div id="sessie-naam" class="sessie-naam"></div>
-        </div>
-        <div class="sessie-knoppen">
-          <button id="nieuwe-sessie" class="knop knop-licht">Nieuwe sessie</button>
-          <button id="verbreek" class="knop knop-licht">Verbreek</button>
-        </div>
+      <div id="tijdlijn-kaart" class="kaart" hidden>
+        <h3>Tijdlijn</h3>
+        <ol id="tijdlijn" class="tijdlijn"></ol>
       </div>
-      <details id="log-vak" class="kaart log">
-        <summary>Verbindingslog (voor hulp bij problemen)</summary>
-        <pre id="log-tekst">Nog niets gebeurd.</pre>
-        <div class="rij-knoppen">
-          <button id="zoektest" class="knop knop-licht" hidden>Zoektest (10 s)</button>
-          <button id="log-kopieer" class="knop knop-licht">Kopieer log</button>
-        </div>
-      </details>
+
+      <div id="sessie-eind" class="sessie-eind" hidden>
+        <button id="afronden" class="knop knop-licht">Sessie afronden</button>
+        <button id="verbreek" class="link">Verbinding verbreken</button>
+      </div>
     </section>
 
-    <!-- HISTORIE -->
-    <section id="tab-historie" hidden>
+    <!-- ================= HISTORIE ================= -->
+    <section id="tab-historie" class="tab-paneel" hidden>
       <div id="historie-lijst"></div>
       <div id="historie-detail" hidden>
-        <button id="terug" class="link">‹ Terug naar overzicht</button>
+        <button id="terug" class="terug">‹ Historie</button>
         <div class="kaart">
           <input id="det-naam" class="det-naam" aria-label="Naam van de sessie">
           <div id="det-info" class="klein grijs"></div>
+          <div id="det-sterren" class="sterren"></div>
+          <img id="det-foto" class="det-foto" alt="Foto van het resultaat" hidden>
           <div id="det-stats" class="stats"></div>
+          <div id="det-legenda" class="legenda"></div>
           <div class="grafiek-vak groot">
             <canvas id="det-grafiek"></canvas>
             <div class="tip" id="det-tip" hidden></div>
           </div>
-          <label class="klein grijs" for="det-notitie">Notitie (bijv. gewicht, hout, rub)</label>
-          <textarea id="det-notitie" rows="3"></textarea>
-          <div class="rij-knoppen">
-            <button id="det-csv" class="knop knop-licht">Download (Excel/CSV)</button>
+          <ol id="det-tijdlijn" class="tijdlijn"></ol>
+          <label class="veld">Notitie
+            <textarea id="det-notitie" rows="3" placeholder="Gewicht, hout, rub, wat ging goed…"></textarea>
+          </label>
+          <div class="rij-knoppen links">
+            <label class="knop knop-licht">📷 Foto<input type="file" accept="image/*" id="det-foto-kies" hidden></label>
+            <button id="det-verder" class="knop knop-licht">▶ Verder met deze sessie</button>
+            <button id="det-csv" class="knop knop-licht">Excel (CSV)</button>
             <button id="det-wis" class="knop knop-gevaar">Verwijder</button>
           </div>
         </div>
       </div>
     </section>
+
+    <!-- ================= INSTELLINGEN ================= -->
+    <section id="tab-instellingen" class="tab-paneel" hidden>
+      <div class="kaart instellingen">
+        <h3>Weergave</h3>
+        <div class="inst-rij"><span>Eenheid</span>
+          <div class="segment" id="inst-eenheid"><button data-w="C">°C</button><button data-w="F">°F</button></div>
+        </div>
+        <label class="inst-rij"><span>Alarmgeluid in de app</span><input type="checkbox" id="inst-geluid" class="schakel"></label>
+        <label class="inst-rij"><span>Trillen bij alarm</span><input type="checkbox" id="inst-trillen" class="schakel"></label>
+      </div>
+
+      <div class="kaart instellingen" id="inst-achtergrond" hidden>
+        <h3>Doormeten met scherm uit</h3>
+        <p class="klein grijs">Tijdens het meten staat er een vaste melding met de temperaturen. Zo houdt Android de app wakker.
+          Zet daarnaast de accubesparing voor deze app uit, anders kan Android hem na een tijd toch stilleggen.</p>
+        <div class="inst-rij"><span>Accubesparing</span><span id="inst-accu" class="grijs">…</span></div>
+        <div class="rij-knoppen"><button id="inst-accu-knop" class="knop knop-licht">Accubesparing uitzetten</button></div>
+      </div>
+
+      <div class="kaart instellingen">
+        <h3>Thermometer</h3>
+        <div class="rij-knoppen links">
+          <button id="inst-verbind" class="knop knop-licht">Verbinden</button>
+          <button id="inst-verbreek" class="knop knop-licht">Verbreken</button>
+          <button id="inst-demo" class="knop knop-licht">Demo</button>
+        </div>
+      </div>
+
+      <div class="kaart instellingen">
+        <h3>Back-up</h3>
+        <p class="klein grijs">Alle sessies, metingen, notities en foto's in één bestand. Handig bij een nieuwe telefoon.</p>
+        <div class="rij-knoppen links">
+          <button id="inst-backup" class="knop knop-licht">Back-up maken</button>
+          <label class="knop knop-licht">Terugzetten<input type="file" accept=".json,application/json" id="inst-terug" hidden></label>
+        </div>
+      </div>
+
+      <details class="kaart instellingen" id="log-vak">
+        <summary>Verbindingslog</summary>
+        <pre id="log-tekst" class="log-pre">Nog niets gebeurd.</pre>
+        <div class="rij-knoppen">
+          <button id="zoektest" class="knop knop-licht" hidden>Zoektest (10 s)</button>
+          <button id="log-kopieer" class="knop knop-licht">Kopieer log</button>
+        </div>
+      </details>
+      <p class="klein grijs midden" id="versie"></p>
+    </section>
   </main>
 
-  <!-- Instellingen per voeler -->
-  <dialog id="dlg">
-    <form method="dialog" id="dlg-form">
-      <h2 id="dlg-titel">Voeler</h2>
-      <label>Naam
-        <input id="dlg-naam" placeholder="bijv. Brisket">
-      </label>
-      <label>Snel kiezen
-        <select id="dlg-preset"></select>
-      </label>
-      <div class="twee">
-        <label>Alarm bij (doel) <span class="eh"></span>
-          <input id="dlg-doel" type="number" inputmode="decimal" step="0.5" placeholder="geen">
-        </label>
-        <label>Alarm onder <span class="eh"></span>
-          <input id="dlg-min" type="number" inputmode="decimal" step="0.5" placeholder="geen">
-        </label>
+  <nav class="onder">
+    <button class="tab actief" data-tab="live">
+      <svg viewBox="0 0 24 24"><path d="M12 2c1 3.5-1.5 5-1.5 7.5 0 1.4 1 2.5 2.3 2.5 1.5 0 2.2-1.2 2.2-2.6 0-.6-.1-1.2-.3-1.7C17.4 9.4 19 12 19 14.6 19 18.7 15.9 22 12 22s-7-3.3-7-7.4C5 9.3 10.2 6.7 12 2z"/></svg>Live</button>
+    <button class="tab" data-tab="historie">
+      <svg viewBox="0 0 24 24" class="lijn"><path d="M4 19h16M6 15l4-5 3 3 5-7"/></svg>Historie</button>
+    <button class="tab" data-tab="instellingen">
+      <svg viewBox="0 0 24 24" class="lijn"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>Instellingen</button>
+  </nav>
+
+  <!-- ================= DIALOGEN ================= -->
+  <dialog id="dlg-voeler" class="blad">
+    <form method="dialog">
+      <h2 id="dv-titel">Voeler</h2>
+      <div class="segment breed" id="dv-rol">
+        <button type="button" data-rol="vlees">🥩 Vlees</button>
+        <button type="button" data-rol="bbq">🔥 BBQ-temperatuur</button>
       </div>
-      <p class="klein grijs">"Alarm onder" is handig voor de BBQ-temperatuur: je krijgt een seintje als het vuur te ver zakt.</p>
+      <label class="veld">Naam<input id="dv-naam" placeholder="bijv. Brisket"></label>
+      <label class="veld">Snel kiezen<select id="dv-preset"></select></label>
+      <p id="dv-tip" class="tip-tekst" hidden></p>
+      <div class="twee" id="dv-vlees">
+        <label class="veld">Klaar bij <span class="eh"></span><input id="dv-doel" type="number" inputmode="decimal" step="0.5" placeholder="geen"></label>
+        <label class="veld">Rusten (min)<input id="dv-rust" type="number" inputmode="numeric" step="1" placeholder="—"></label>
+      </div>
+      <div class="twee" id="dv-bbq">
+        <label class="veld">Minimaal <span class="eh"></span><input id="dv-min" type="number" inputmode="decimal" step="1" placeholder="geen"></label>
+        <label class="veld">Maximaal <span class="eh"></span><input id="dv-max" type="number" inputmode="decimal" step="1" placeholder="geen"></label>
+      </div>
       <div class="rij-knoppen">
         <button value="annuleer" class="knop knop-licht">Annuleer</button>
         <button value="ok" class="knop">Bewaar</button>
@@ -157,9 +217,73 @@
     </form>
   </dialog>
 
-  <div id="melding" class="melding" hidden></div>
+  <dialog id="dlg-sessie" class="blad">
+    <form method="dialog">
+      <h2>Sessie</h2>
+      <label class="veld">Naam<input id="ds-naam" placeholder="bijv. Brisket voor het verjaardagsfeest"></label>
+      <label class="veld">Opstelling van de BBQ<select id="ds-opstelling"></select></label>
+      <p id="ds-tip" class="tip-tekst" hidden></p>
+      <label class="veld">Welke voeler meet de BBQ-temperatuur?<select id="ds-bbq"></select></label>
+      <label class="veld">Eten om (optioneel)<input id="ds-eettijd" type="time"></label>
+      <p class="klein grijs">Met een eettijd rekent de app uit of je op schema ligt, inclusief rusttijd.</p>
+      <div class="rij-knoppen">
+        <button value="annuleer" class="knop knop-licht">Annuleer</button>
+        <button value="ok" class="knop">Bewaar</button>
+      </div>
+    </form>
+  </dialog>
 
-  <script src="native.js"></script>
+  <dialog id="dlg-gebeurtenis" class="blad">
+    <form method="dialog">
+      <h2>Gebeurtenis vastleggen</h2>
+      <label class="veld">Toelichting (optioneel)<input id="dg-tekst" placeholder="bijv. 6 briketten, 2 blokjes kers"></label>
+      <div id="dg-knoppen" class="gebeurtenis-grid"></div>
+      <div class="rij-knoppen"><button value="annuleer" class="knop knop-licht">Sluiten</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-timer" class="blad">
+    <form method="dialog">
+      <h2>Timer</h2>
+      <div id="dt-snel" class="chips knoppen"></div>
+      <label class="veld">Naam<input id="dt-naam" value="Timer"></label>
+      <div class="twee">
+        <label class="veld">Minuten<input id="dt-min" type="number" inputmode="numeric" min="1" value="10"></label>
+        <label class="veld vink"><input type="checkbox" id="dt-herhaal"> Herhalen</label>
+      </div>
+      <div class="rij-knoppen">
+        <button value="annuleer" class="knop knop-licht">Annuleer</button>
+        <button value="ok" class="knop">Start</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-afronden" class="blad">
+    <form method="dialog">
+      <h2>Sessie afronden</h2>
+      <div id="da-stats" class="stats"></div>
+      <div class="veld">Hoe was het?<div id="da-sterren" class="sterren groot"></div></div>
+      <label class="veld">Notitie<textarea id="da-notitie" rows="3" placeholder="Wat ging goed, wat volgende keer anders?"></textarea></label>
+      <label class="knop knop-licht">📷 Foto toevoegen<input type="file" accept="image/*" id="da-foto" hidden></label>
+      <img id="da-foto-voorbeeld" class="det-foto" alt="" hidden>
+      <div class="rij-knoppen">
+        <button value="annuleer" class="knop knop-licht">Nog niet</button>
+        <button value="ok" class="knop">Afronden</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="dlg-vraag" class="blad klein-blad">
+    <form method="dialog">
+      <p id="vraag-tekst"></p>
+      <div class="rij-knoppen">
+        <button value="nee" id="vraag-nee" class="knop knop-licht">Annuleer</button>
+        <button value="ja" id="vraag-ja" class="knop">OK</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="melding" class="melding" hidden></div>
   <script src="app.js"></script>
 </body>
 </html>

@@ -1,10 +1,9 @@
-// Alleen in de Android-app: geeft de webapp de echte Android-Bluetooth, meldingen en
+// Alleen in de Android-app: geeft de webapp de echte Android-Bluetooth en
 // "scherm aan" via Capacitor. Bootst daarvoor het stukje Web Bluetooth na dat app.js
 // gebruikt, zodat app.js zelf niet hoeft te veranderen. In de browser doet dit niets.
 // Bouwen: npm run bouw  (→ public/native.js)
 import { Capacitor } from '@capacitor/core';
 import { BleClient, numberToUUID } from '@capacitor-community/bluetooth-le';
-import { LocalNotifications } from '@capacitor/local-notifications';
 import { KeepAwake } from '@capacitor-community/keep-awake';
 
 const naarUuid = (u) => (typeof u === 'number' ? numberToUUID(u) : String(u).toLowerCase());
@@ -110,6 +109,8 @@ if (Capacitor.isNativePlatform()) {
     return lijst;
   };
   bluetooth.apparaat = (id, name) => new Apparaat({ deviceId: id, name });
+  // Melden als Bluetooth aan/uit gaat (dan meteen opnieuw verbinden)
+  bluetooth.opAdapter = (terug) => { init().then(() => BleClient.startEnabledNotifications(terug)).catch(() => {}); };
   bluetooth.onthoud = (a) => {
     try { localStorage.setItem('bbqApparaat', JSON.stringify({ deviceId: a.id, name: a.name })); } catch { /* geen opslag */ }
   };
@@ -139,21 +140,4 @@ if (Capacitor.isNativePlatform()) {
     },
   });
 
-  // Meldingen (alarm) via Android
-  let id = 1;
-  class Melding {
-    static permission = 'default';
-    static async requestPermission() {
-      const r = await LocalNotifications.requestPermissions();
-      Melding.permission = r.display === 'granted' ? 'granted' : 'denied';
-      return Melding.permission;
-    }
-    constructor(titel, opties = {}) {
-      LocalNotifications.schedule({ notifications: [{ id: id++, title: titel, body: opties.body || '' }] }).catch(() => {});
-    }
-  }
-  LocalNotifications.checkPermissions()
-    .then((r) => { Melding.permission = r.display === 'granted' ? 'granted' : r.display === 'denied' ? 'denied' : 'default'; })
-    .catch(() => {});
-  window.Notification = Melding;
 }

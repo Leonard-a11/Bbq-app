@@ -6,20 +6,31 @@ IBT-2X, IBT-4XS, IBT-6XS en vergelijkbare). Het is een website die je in
 
 ## Wat kan hij
 
-- **Live**: alle voelers groot in beeld, batterij, °C/°F.
-- **Alarm** per voeler: "alarm bij" (doeltemperatuur) en "alarm onder" (voor de
-  BBQ-temperatuur). Geluid, trillen en een melding. Snelkeuzes voor vlees
-  (rund rare/medium, pulled pork, brisket, kip …) en low & slow / hot & fast.
-- **Klaar om**: rekent uit hoe snel het vlees stijgt en wanneer het op temperatuur is.
-- **Grafiek** van de hele sessie (15 min / 1 uur / 4 uur / alles), tik voor de waarden.
-- **Historie**: elke sessie wordt automatisch bewaard (één meting per 5 seconden),
-  met naam, notitie, max/gemiddeld/eind per voeler en download naar Excel (CSV).
-- Verbinding weg? Hij verbindt vanzelf opnieuw en meldt het na 1 minuut.
-- Het scherm blijft aan zolang de thermometer verbonden is.
-- Demo zonder thermometer: knop op het startscherm, of `?demo` achter het adres.
+- **Live**: per voeler een ronde meter (vult richting het doel), tempo in °/uur en
+  **verwachte klaar-tijd**. Die houdt rekening met afremmen: vlees warmt langzamer op
+  naarmate het de BBQ-temperatuur nadert (berekend met de BBQ-voeler).
+- **Rol per voeler**: *vlees* (doel + rusttijd, snelkeuze brisket, pulled pork, ribs,
+  picanha, kip …) of *BBQ-temperatuur* (min–max, opstellingen voor de Weber-ketel:
+  low & slow met diffuser, snake, 2-zone, hot & fast, reverse sear).
+- **Slimme meldingen**: stall herkennen, deksel open (plotselinge daling), BBQ te
+  heet/koud met ventieladvies, "kolen raken op?" (15 min te koud en geen herstel),
+  bijna klaar, klaar → rusttimer.
+- **Kookplan**: geef een eettijd op; de app zegt of je op schema ligt (incl. rusten).
+- **Gebeurtenissen** (kolen, rookhout, ingepakt, spritzen, deksel …) als icoontjes in
+  de grafiek en in de tijdlijn. **Timers**, ook herhalend (spritzen elke 45 min).
+- **Doormeten met scherm uit** (Android-app): vaste melding met live temperaturen,
+  CPU blijft wakker; alarmen en timers als melding op de telefoon.
+- **Verbinding weg?** Eindeloos opnieuw verbinden (meteen als Bluetooth weer aan gaat),
+  alarm na 2 min. De sessie blijft open tot je hem afrondt; ook na het afsluiten van
+  de app gaat hij verder (de app verbindt dan vanzelf). In de historie kun je elke
+  sessie weer openen met "Verder met deze sessie".
+- **Historie**: overzicht (aantal sessies, uren, langste cook), mini-grafiekjes,
+  sterren, foto van het resultaat, notities, statistiek (gemiddelde BBQ-temp, % binnen
+  bereik, stallduur), export naar Excel (CSV, met gebeurtenissen).
+- **Back-up** van alles in één bestand, en terugzetten (nieuwe telefoon).
+- Demo zonder thermometer.
 
-Alle gegevens blijven op je eigen telefoon (in de browser), niets gaat online.
-Let op: "Sitegegevens wissen" in Chrome wist ook de historie.
+Alle gegevens blijven op je eigen telefoon.
 
 ## Android-app installeren (aanbevolen)
 
@@ -59,10 +70,17 @@ Bluetooth werkt alleen via **https**, dus niet als los bestand op de telefoon.
 
 ## Techniek
 
-- `public/app.js`: alles (Bluetooth, opslag in IndexedDB, grafiek, alarmen).
-- `native/native.js` → `public/native.js` (`npm run bouw`): alleen in de Android-app
-  (Capacitor). Geeft app.js de Android-Bluetooth (`@capacitor-community/bluetooth-le`)
-  in de vorm van Web Bluetooth, plus meldingen en scherm-aan. In de browser doet het niets.
+- Broncode in `app/` (ES-modules), gebundeld met `npm run bouw` → `public/app.js`
+  (dat bestand staat in git, want Cloudflare bouwt niets):
+  `main.js` (opstart, dialogen, instellingen), `ble.js` (iBBQ-protocol, opnieuw verbinden,
+  demo), `sessie.js` (sessies, opslaan, samenvoegen, heropenen), `live.js` (analyse,
+  kaarten, adviezen, kookplan, alarmen), `analyse.js` (tempo, klaar-tijd, stall, deksel),
+  `grafiek.js`, `historie.js`, `timers.js`, `alarmen.js` (geluid, meldingen,
+  achtergrondservice), `opslag.js` (IndexedDB + back-up), `kookboek.js` (vlees,
+  opstellingen, gebeurtenissen), `native.js` (alleen in de app: Android-Bluetooth in de
+  vorm van Web Bluetooth).
+- Android: `MeetService.java` (voorgrondservice + wake lock) en `AchtergrondPlugin.java`
+  (start/stop/melding bijwerken, accubesparing).
 - `android/`: Capacitor-project. Vaste handtekening `android/app/bbq-thermometer.keystore`
   (nodig om updates over de oude versie heen te installeren; niet weggooien).
 - iBBQ: service `FFF0`; inloggen = vaste 15 bytes naar `FFF2`; daarna naar `FFF5`:
