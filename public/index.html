@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>BBQ Thermometer</title>
+  <meta name="theme-color" content="#16181d">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icoon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icoon-192.png">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header class="kop">
+    <h1>BBQ Thermometer</h1>
+    <div class="kop-rechts">
+      <span id="status" class="pil">Niet verbonden</span>
+      <span id="batterij" class="pil" hidden></span>
+      <button id="eenheid" class="pil knop-pil" title="Wissel °C / °F">°C</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab actief" data-tab="live">Live</button>
+    <button class="tab" data-tab="historie">Historie</button>
+  </nav>
+
+  <main>
+    <!-- LIVE -->
+    <section id="tab-live">
+      <div id="alarm" class="alarm" hidden>
+        <div id="alarm-tekst"></div>
+        <button id="alarm-stop" class="knop knop-licht">Alarm uit</button>
+      </div>
+
+      <div id="verbind-kaart" class="kaart verbind">
+        <p>Zet Bluetooth aan op je telefoon en zet de thermometer aan.</p>
+        <button id="verbind" class="knop knop-groot">Verbind thermometer</button>
+        <button id="demo" class="link">of probeer de demo (zonder thermometer)</button>
+        <p id="geen-bt" class="klein waarschuwing" hidden>
+          Deze browser kan geen Bluetooth gebruiken. Open deze pagina in <b>Chrome</b> op Android.
+        </p>
+      </div>
+
+      <div id="voelers" class="voelers"></div>
+
+      <div class="kaart" id="grafiek-kaart" hidden>
+        <div class="grafiek-kop">
+          <div class="bereik" id="bereik">
+            <button data-min="15">15 min</button>
+            <button data-min="60" class="actief">1 uur</button>
+            <button data-min="240">4 uur</button>
+            <button data-min="0">Alles</button>
+          </div>
+        </div>
+        <div class="grafiek-vak">
+          <canvas id="grafiek"></canvas>
+          <div class="tip" id="grafiek-tip" hidden></div>
+        </div>
+      </div>
+
+      <div class="kaart sessie" id="sessie-kaart" hidden>
+        <div>
+          <div class="klein grijs">Sessie (wordt automatisch bewaard)</div>
+          <div id="sessie-naam" class="sessie-naam"></div>
+        </div>
+        <div class="sessie-knoppen">
+          <button id="nieuwe-sessie" class="knop knop-licht">Nieuwe sessie</button>
+          <button id="verbreek" class="knop knop-licht">Verbreek</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- HISTORIE -->
+    <section id="tab-historie" hidden>
+      <div id="historie-lijst"></div>
+      <div id="historie-detail" hidden>
+        <button id="terug" class="link">‹ Terug naar overzicht</button>
+        <div class="kaart">
+          <input id="det-naam" class="det-naam" aria-label="Naam van de sessie">
+          <div id="det-info" class="klein grijs"></div>
+          <div id="det-stats" class="stats"></div>
+          <div class="grafiek-vak groot">
+            <canvas id="det-grafiek"></canvas>
+            <div class="tip" id="det-tip" hidden></div>
+          </div>
+          <label class="klein grijs" for="det-notitie">Notitie (bijv. gewicht, hout, rub)</label>
+          <textarea id="det-notitie" rows="3"></textarea>
+          <div class="rij-knoppen">
+            <button id="det-csv" class="knop knop-licht">Download (Excel/CSV)</button>
+            <button id="det-wis" class="knop knop-gevaar">Verwijder</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Instellingen per voeler -->
+  <dialog id="dlg">
+    <form method="dialog" id="dlg-form">
+      <h2 id="dlg-titel">Voeler</h2>
+      <label>Naam
+        <input id="dlg-naam" placeholder="bijv. Brisket">
+      </label>
+      <label>Snel kiezen
+        <select id="dlg-preset"></select>
+      </label>
+      <div class="twee">
+        <label>Alarm bij (doel) <span class="eh"></span>
+          <input id="dlg-doel" type="number" inputmode="decimal" step="0.5" placeholder="geen">
+        </label>
+        <label>Alarm onder <span class="eh"></span>
+          <input id="dlg-min" type="number" inputmode="decimal" step="0.5" placeholder="geen">
+        </label>
+      </div>
+      <p class="klein grijs">"Alarm onder" is handig voor de BBQ-temperatuur: je krijgt een seintje als het vuur te ver zakt.</p>
+      <div class="rij-knoppen">
+        <button value="annuleer" class="knop knop-licht">Annuleer</button>
+        <button value="ok" class="knop">Bewaar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="melding" class="melding" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
