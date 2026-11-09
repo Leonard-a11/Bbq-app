@@ -225,19 +225,35 @@ function leesBatterij(dv) {
   toonStatus();
 }
 
-async function verbind() {
+// Diensten die we mogen bekijken (Web Bluetooth geeft alleen toegang tot wat hier staat).
+// Naast het iBBQ-protocol een paar veelgebruikte, zodat de diagnose ook andere modellen laat zien.
+const ANDERE_DIENSTEN = [0xffe0, 0xffb0, 0xffd0, 0xff00, 0xfee0, 0xfe00, 0xfff6, 0x180a, 0x180f,
+  '0000fee7-0000-1000-8000-00805f9b34fb', '6e400001-b5a3-f393-e0a9-e50e24dcca9e'];
+
+async function verbind(alles = false) {
   if (!navigator.bluetooth) { $('#geen-bt').hidden = false; return; }
   ontgrendelGeluid();
   vraagMeldingen();
+  $('#diagnose').hidden = true;
   let dev;
   try {
-    dev = await navigator.bluetooth.requestDevice({
-      filters: [{ namePrefix: 'iBBQ' }, { namePrefix: 'IBT' }, { services: [SERVICE] }],
-      optionalServices: [SERVICE],
-    });
+    dev = await navigator.bluetooth.requestDevice(alles
+      ? { acceptAllDevices: true, optionalServices: [SERVICE, ...ANDERE_DIENSTEN] }
+      : {
+        filters: [{ namePrefix: 'iBBQ' }, { namePrefix: 'IBT' }, { namePrefix: 'Inkbird' },
+          { namePrefix: 'INKBIRD' }, { services: [SERVICE] }],
+        optionalServices: [SERVICE, ...ANDERE_DIENSTEN],
+      });
   } catch (e) {
-    if (e.name !== 'NotFoundError') melding('Zoeken mislukt: ' + e.message);
-    return; // gebruiker heeft geannuleerd
+    if (/cancel/i.test(e.message)) return; // gebruiker sloot de lijst
+    if (/adapter|not available|unavailable/i.test(e.message)) {
+      melding('Bluetooth staat uit, of Chrome mag het niet gebruiken. Zie "Lukt het niet?".', 7000);
+    } else if (/permission|denied|NotAllowed/i.test(e.name + e.message)) {
+      melding('Chrome kreeg geen toestemming. Zet "Apparaten in de buurt" en "Locatie" aan voor Chrome.', 7000);
+    } else {
+      melding('Zoeken mislukt: ' + e.message, 7000);
+    }
+    return;
   }
   stopDemo();
   S.apparaat = dev;
@@ -247,7 +263,9 @@ async function verbind() {
     await koppel(dev);
   } catch (e) {
     console.error(e);
-    melding('Verbinden mislukt: ' + e.message + '. Probeer het nog eens.', 6000);
+    melding(/ander protocol/.test(e.message)
+      ? 'Verbonden, maar dit model praat anders. Zie de gegevens hieronder.'
+      : 'Verbinden mislukt: ' + e.message + '. Probeer het nog eens.', 7000);
     S.handmatigLos = true;
     S.apparaat = null;
     try { dev.gatt.disconnect(); } catch { /* al los */ }
@@ -258,7 +276,13 @@ async function verbind() {
 async function koppel(dev) {
   toonStatus('Verbinden…');
   const server = await dev.gatt.connect();
-  const svc = await server.getPrimaryService(SERVICE);
+  let svc;
+  try {
+    svc = await server.getPrimaryService(SERVICE);
+  } catch (e) {
+    await toonDiagnose(dev, server);
+    throw new Error('dit model gebruikt een ander protocol');
+  }
   const [res, login, live, inst] = await Promise.all(
     [CH_RESULTAAT, CH_LOGIN, CH_LIVE, CH_INSTELLING].map((u) => svc.getCharacteristic(u)));
   S.kanalen = { res, login, live, inst };
@@ -280,6 +304,35 @@ async function koppel(dev) {
   houdSchermAan();
   toonStatus();
   toonVerbinden();
+}
+
+// Laat zien wat het apparaat aanbiedt, zodat de app op een ander model kan worden aangepast.
+async function toonDiagnose(dev, server) {
+  const r = [`Naam: ${dev.name || '(geen naam)'}`, `Browser: ${navigator.userAgent}`];
+  const tekst = (dv) => new TextDecoder().decode(dv).replace(/\0+$/, '');
+  const hex = (dv) => [...new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength)].map((b) => b.toString(16).padStart(2, '0')).join(' ');
+  let diensten = [];
+  try { diensten = await server.getPrimaryServices(); } catch (e) { r.push('Diensten: ' + e.message); }
+  if (!diensten.length) r.push('Geen bekende diensten gevonden.');
+  for (const d of diensten) {
+    r.push(`Dienst ${d.uuid}`);
+    let kenmerken = [];
+    try { kenmerken = await d.getCharacteristics(); } catch (e) { r.push('  ' + e.message); }
+    for (const c of kenmerken) {
+      const props = ['read', 'write', 'writeWithoutResponse', 'notify', 'indicate'].filter((k) => c.properties[k]);
+      let waarde = '';
+      if (c.properties.read) {
+        try {
+          const dv = await c.readValue();
+          const t = tekst(dv);
+          waarde = /^[\x20-\x7e]+$/.test(t) ? ` = "${t}"` : ` = ${hex(dv)}`;
+        } catch { /* niet leesbaar */ }
+      }
+      r.push(`  ${c.uuid} [${props.join(', ')}]${waarde}`);
+    }
+  }
+  $('#diagnose-tekst').textContent = r.join('\n');
+  $('#diagnose').hidden = false;
 }
 
 async function bijVerbroken() {
@@ -767,7 +820,13 @@ function start() {
   detGrafiek = new Grafiek($('#det-grafiek'), $('#det-tip'));
   vulPresets();
   document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => kiesTab(t.dataset.tab)));
-  $('#verbind').addEventListener('click', verbind);
+  $('#verbind').addEventListener('click', () => verbind(false));
+  $('#verbind-alles').addEventListener('click', () => verbind(true));
+  $('#diagnose-kopieer').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText($('#diagnose-tekst').textContent); melding('Gekopieerd'); }
+    catch { melding('Kopiëren lukte niet; maak een schermafbeelding.'); }
+  });
+  navigator.bluetooth?.getAvailability?.().then((ok) => { $('#bt-uit').hidden = ok; }).catch(() => {});
   $('#demo').addEventListener('click', startDemo);
   $('#verbreek').addEventListener('click', verbreek);
   $('#alarm-stop').addEventListener('click', stopAlarm);

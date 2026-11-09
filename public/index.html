@@ -36,10 +36,38 @@
       <div id="verbind-kaart" class="kaart verbind">
         <p>Zet Bluetooth aan op je telefoon en zet de thermometer aan.</p>
         <button id="verbind" class="knop knop-groot">Verbind thermometer</button>
+        <button id="verbind-alles" class="link">Thermometer staat niet in de lijst? Toon álle Bluetooth-apparaten</button>
         <button id="demo" class="link">of probeer de demo (zonder thermometer)</button>
         <p id="geen-bt" class="klein waarschuwing" hidden>
-          Deze browser kan geen Bluetooth gebruiken. Open deze pagina in <b>Chrome</b> op Android.
+          Deze browser kan geen Bluetooth gebruiken. Open deze pagina in <b>Chrome</b> zelf
+          (niet via een link in WhatsApp/mail, en niet in Samsung Internet).
         </p>
+        <p id="bt-uit" class="klein waarschuwing" hidden>
+          Chrome ziet geen Bluetooth. Staat Bluetooth aan op je telefoon?
+        </p>
+        <details class="hulp">
+          <summary>Lukt het niet? Loop dit even na</summary>
+          <ol>
+            <li><b>Sluit de Inkbird-app helemaal af</b> (overzicht van open apps → wegvegen).
+              Zolang die verbonden is, is de thermometer onzichtbaar voor andere apps.</li>
+            <li>Zet <b>Bluetooth</b> én <b>Locatie</b> aan (snelmenu bovenaan het scherm).</li>
+            <li>Geef Chrome toestemming: Instellingen → Apps → Chrome → Rechten →
+              <b>Apparaten in de buurt</b> en <b>Locatie</b> op "Toestaan".</li>
+            <li>Zet de thermometer uit en weer aan, en houd de telefoon er dichtbij.</li>
+            <li>Nog steeds niets? Kies "Toon álle Bluetooth-apparaten" en zoek een naam als
+              iBBQ, IBT, Inkbird of "Onbekend apparaat".</li>
+          </ol>
+        </details>
+      </div>
+
+      <div id="diagnose" class="kaart" hidden>
+        <b>Deze thermometer praat anders dan verwacht</b>
+        <p class="klein grijs">Verbinden lukte, maar hij gebruikt niet het bekende Inkbird-BBQ-protocol.
+          Kopieer onderstaande gegevens en stuur ze door (samen met het modelnummer), dan kan de app erop worden aangepast.</p>
+        <pre id="diagnose-tekst"></pre>
+        <div class="rij-knoppen">
+          <button id="diagnose-kopieer" class="knop">Kopieer gegevens</button>
+        </div>
       </div>
 
       <div id="voelers" class="voelers"></div>
