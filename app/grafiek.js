@@ -20,7 +20,7 @@ export class Grafiek {
   teken() {
     const cv = this.cv, w = cv.clientWidth, h = cv.clientHeight;
     if (!w || !h) return;
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = this.o.schaal || window.devicePixelRatio || 1;
     cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
     const c = cv.getContext('2d');
     c.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -30,7 +30,7 @@ export class Grafiek {
     c.font = '11px system-ui, sans-serif';
     this.tip.hidden = true;
 
-    const { voelers = [], bereikMs = 0, gebeurtenissen = [], verborgen = new Set() } = this.o;
+    const { voelers = [], bereikMs = 0, gebeurtenissen = [], verborgen = new Set(), toekomst = [] } = this.o;
     const alle = this.metingen;
     if (alle.length < 2) {
       c.fillStyle = grijs; c.textAlign = 'center'; c.textBaseline = 'middle';
@@ -41,7 +41,15 @@ export class Grafiek {
     const van = bereikMs ? Math.max(alle[0].t, tot - bereikMs) : alle[0].t;
     let pts = alle.filter((m) => m.t >= van);
     if (pts.length < 2) pts = alle.slice(-2);
-    const t0 = pts[0].t, t1 = Math.max(pts[pts.length - 1].t, t0 + 60e3);
+    const t0 = pts[0].t;
+    let t1 = Math.max(pts[pts.length - 1].t, t0 + 60e3);
+    const nuT = t1;
+    // voorspelling: grafiek iets verder naar rechts laten lopen
+    const tk = toekomst.filter((f) => !verborgen.has(f.i) && f.punten?.length > 1);
+    if (tk.length) {
+      const verst = Math.max(...tk.map((f) => f.punten[f.punten.length - 1][0]));
+      t1 = Math.min(Math.max(t1, verst + 5 * 60e3), t1 + Math.max(30 * 60e3, (t1 - t0) * 0.6));
+    }
     const aantal = Math.max(...pts.map((m) => m.v.length));
     const zichtbaar = [];
     for (let i = 0; i < aantal; i++) if (!verborgen.has(i) && pts.some((m) => m.v[i] != null)) zichtbaar.push(i);
@@ -137,6 +145,31 @@ export class Grafiek {
         c.fillStyle = kleur + '40'; c.beginPath(); c.arc(x, y, 7, 0, 7); c.fill();
         c.fillStyle = kleur; c.beginPath(); c.arc(x, y, 3.5, 0, 7); c.fill();
       }
+    }
+
+    // voorspelling (stippellijn naar het doel)
+    if (tk.length) {
+      c.save();
+      c.beginPath(); c.rect(L, 0, pw, h); c.clip();
+      c.strokeStyle = grijs + '55'; c.setLineDash([1, 4]);
+      c.beginPath(); c.moveTo(X(nuT), T); c.lineTo(X(nuT), T + ph); c.stroke();
+      for (const f of tk) {
+        const k = KLEUREN[f.i % KLEUREN.length];
+        c.setLineDash([5, 5]); c.strokeStyle = k + 'b0'; c.lineWidth = 2;
+        c.beginPath();
+        f.punten.forEach(([t, y], n) => (n ? c.lineTo(X(t), Y(naarEenheid(y))) : c.moveTo(X(t), Y(naarEenheid(y)))));
+        c.stroke(); c.setLineDash([]);
+        const [te, ye] = f.punten[f.punten.length - 1];
+        if (te <= t1) {
+          const x = X(te), y = Y(naarEenheid(ye));
+          c.fillStyle = k; c.beginPath(); c.arc(x, y, 4, 0, 7); c.fill();
+          c.font = 'bold 11px system-ui, sans-serif'; c.textBaseline = 'bottom';
+          c.textAlign = x > w - 60 ? 'right' : 'center';
+          c.fillText(`✓ ${fmtTijd(te)}`, x, y - 6);
+        }
+      }
+      c.restore();
+      c.font = '11px system-ui, sans-serif';
     }
 
     // gebeurtenissen

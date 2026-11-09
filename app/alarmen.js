@@ -1,6 +1,7 @@
 // Alarmen: geluid, trillen, meldingen (ook met scherm uit) en de achtergrondservice.
 import { registerPlugin } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
+import { TextToSpeech } from '@capacitor-community/text-to-speech';
 import { inst } from './staat.js';
 import { $, esc, isNative } from './hulp.js';
 
@@ -25,6 +26,17 @@ function piep() {
     o.connect(g).connect(ctx.destination);
     o.start(ctx.currentTime + d); o.stop(ctx.currentTime + d + 0.17);
   });
+}
+
+/** Uitspreken (Nederlands). In de app via Android-spraak, in de browser via speechSynthesis. */
+export function spreek(tekst) {
+  if (!inst.spraak) return;
+  const t = String(tekst).replace(/°C|°F|°/g, ' graden').replace(/[⏱🔥🔔✅📖]/gu, '').replace(/\s+/g, ' ').trim();
+  if (!t) return;
+  try {
+    if (isNative()) TextToSpeech.speak({ text: t, lang: 'nl-NL', rate: 1.0, volume: 1.0, category: 'playback', queueStrategy: 1 }).catch(() => {});
+    else if (window.speechSynthesis) { const u = new SpeechSynthesisUtterance(t); u.lang = 'nl-NL'; speechSynthesis.speak(u); }
+  } catch { /* geen spraak */ }
 }
 
 export async function vraagMeldingen() {
@@ -73,6 +85,7 @@ export function geefAlarm(sleutel, titel, tekst, { melden = true } = {}) {
   if (!geluidTimer) { piep(); geluidTimer = setInterval(piep, 1400); }
   if (inst.trillen && navigator.vibrate) navigator.vibrate([400, 200, 400, 200, 400]);
   if (melden) toestelMelding(titel, tekst);
+  spreek(titel);
 }
 export function heeftAlarm(sleutel) { return actief.has(sleutel); }
 export function wisAlarm(sleutel) {

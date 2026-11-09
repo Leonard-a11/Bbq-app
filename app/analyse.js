@@ -52,21 +52,23 @@ export function verwachting(metingen, i, nu, huidig, doel, pit = null) {
   if (isStall(metingen, i, nu, huidig)) return { stall: true, tekst: 'stall – even geduld' };
   if (kort < 0.6) return { tekst: kort < 0 ? 'daalt' : 'stijgt nauwelijks' };
   const lang = tempo(metingen, i, nu, 40 * 60e3);
-  let minuten;
+  let minuten, model;
   if (pit != null && pit <= doel + 2) return { tekst: 'BBQ te koud voor dit doel' };
   if (pit != null && pit > huidig + 3) {
     // Opwarmen remt af naarmate het vlees de BBQ-temperatuur nadert (wet van Newton):
     // tempo = k × (BBQ − vlees)  →  tijd = −ln((BBQ − doel) / (BBQ − vlees)) / k
     const k = kort / (pit - huidig);
     minuten = (-Math.log((pit - doel) / (pit - huidig)) / k) * 60;
+    model = { pit, k };
   } else {
     // zonder BBQ-voeler: voorzichtig lineair
     const snelheid = lang != null && lang > 0.6 ? Math.min(kort, (kort + lang) / 2) : kort;
     minuten = ((doel - huidig) / snelheid) * 60;
+    model = { snelheid };
   }
   if (!Number.isFinite(minuten) || minuten < 0) return { tekst: 'tempo meten…' };
   if (minuten > 36 * 60) return { tekst: 'nog lang' };
-  return { minuten, klaarOm: nu + minuten * 60e3, zeker: lang != null };
+  return { minuten, klaarOm: nu + minuten * 60e3, zeker: lang != null, model };
 }
 
 /** Gemiddelde over het venster (bijv. BBQ-temperatuur van het afgelopen kwartier). */
@@ -110,4 +112,19 @@ export function stallDuur(metingen, i) {
     if (isStall(metingen.slice(0, k + 1), i, t, metingen[k].v[i])) duur += stap;
   }
   return duur;
+}
+
+/** Verwachte temperatuurlijn van nu tot het doel (voor de stippellijn in de grafiek). */
+export function voorspelLijn(huidig, doel, eta, nu) {
+  if (!eta?.klaarOm || !eta.model || huidig == null) return null;
+  const eind = Math.min(eta.klaarOm, nu + 16 * 3600e3);
+  const stap = Math.max(60e3, (eind - nu) / 40);
+  const p = [];
+  for (let t = nu; t < eind; t += stap) {
+    const u = (t - nu) / 3600e3;
+    const y = eta.model.k ? eta.model.pit - (eta.model.pit - huidig) * Math.exp(-eta.model.k * u) : huidig + eta.model.snelheid * u;
+    p.push([t, Math.min(y, doel)]);
+  }
+  p.push([eind, doel]);
+  return p;
 }

@@ -58,12 +58,16 @@
       <div id="sessie" class="sessie" hidden>
         <div class="sessie-boven">
           <button id="sessie-naam" class="sessie-naam" title="Sessie instellen"></button>
-          <div id="sessie-klok" class="sessie-klok">0:00:00</div>
+          <div class="sessie-rechts">
+            <div id="sessie-klok" class="sessie-klok">0:00:00</div>
+            <button id="keuken-knop" class="keuken-knop" title="Keukenmodus: grote cijfers">⛶</button>
+          </div>
         </div>
         <div id="sessie-chips" class="chips"></div>
       </div>
 
       <div id="plan" class="plan" hidden></div>
+      <div id="recept-kaart" class="kaart recept-kaart" hidden></div>
       <div id="adviezen" class="adviezen"></div>
       <div id="voelers" class="voelers"></div>
       <div id="los-voelers" class="los-voelers"></div>
@@ -103,6 +107,24 @@
       </div>
     </section>
 
+    <!-- ================= RECEPTEN ================= -->
+    <section id="tab-recepten" class="tab-paneel" hidden>
+      <div class="segment breed" id="rc-modus">
+        <button type="button" data-m="recepten" class="actief">📖 Recepten</button>
+        <button type="button" data-m="planner">🧮 Planner</button>
+        <button type="button" data-m="gidsen">💡 Gidsen</button>
+      </div>
+      <div id="rc-recepten">
+        <input id="rc-zoek" type="search" class="zoek" placeholder="Zoek op recept of ingrediënt…">
+        <div id="rc-cats" class="chips knoppen scroll"></div>
+        <div id="rc-lijst" class="recept-grid"></div>
+        <div class="midden"><button id="rc-nieuw" class="knop knop-licht">＋ Eigen recept</button></div>
+      </div>
+      <div id="rc-detail" hidden></div>
+      <div id="rc-planner" hidden></div>
+      <div id="rc-gidsen" hidden></div>
+    </section>
+
     <!-- ================= HISTORIE ================= -->
     <section id="tab-historie" class="tab-paneel" hidden>
       <div id="historie-lijst"></div>
@@ -126,6 +148,7 @@
           <div class="rij-knoppen links">
             <label class="knop knop-licht">📷 Foto<input type="file" accept="image/*" id="det-foto-kies" hidden></label>
             <button id="det-verder" class="knop knop-licht">▶ Verder met deze sessie</button>
+            <button id="det-deel" class="knop">📸 Deel</button>
             <button id="det-csv" class="knop knop-licht">Excel (CSV)</button>
             <button id="det-wis" class="knop knop-gevaar">Verwijder</button>
           </div>
@@ -142,6 +165,7 @@
         </div>
         <label class="inst-rij"><span>Alarmgeluid in de app</span><input type="checkbox" id="inst-geluid" class="schakel"></label>
         <label class="inst-rij"><span>Trillen bij alarm</span><input type="checkbox" id="inst-trillen" class="schakel"></label>
+        <label class="inst-rij"><span>Gesproken meldingen 🗣️</span><input type="checkbox" id="inst-spraak" class="schakel"></label>
       </div>
 
       <div class="kaart instellingen" id="inst-achtergrond" hidden>
@@ -185,6 +209,8 @@
   <nav class="onder">
     <button class="tab actief" data-tab="live">
       <svg viewBox="0 0 24 24"><path d="M12 2c1 3.5-1.5 5-1.5 7.5 0 1.4 1 2.5 2.3 2.5 1.5 0 2.2-1.2 2.2-2.6 0-.6-.1-1.2-.3-1.7C17.4 9.4 19 12 19 14.6 19 18.7 15.9 22 12 22s-7-3.3-7-7.4C5 9.3 10.2 6.7 12 2z"/></svg>Live</button>
+    <button class="tab" data-tab="recepten">
+      <svg viewBox="0 0 24 24" class="lijn"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 21V5M8 7h7M8 11h5"/></svg>Recepten</button>
     <button class="tab" data-tab="historie">
       <svg viewBox="0 0 24 24" class="lijn"><path d="M4 19h16M6 15l4-5 3 3 5-7"/></svg>Historie</button>
     <button class="tab" data-tab="instellingen">
@@ -282,6 +308,39 @@
       </div>
     </form>
   </dialog>
+
+  <dialog id="dlg-recept" class="blad">
+    <form method="dialog">
+      <h2 id="dr-titel">Eigen recept</h2>
+      <div class="twee drie-een">
+        <label class="veld">Naam<input id="dr-naam" placeholder="bijv. Opa's ribs"></label>
+        <label class="veld">Icoon<input id="dr-emoji" maxlength="4"></label>
+      </div>
+      <div class="twee">
+        <label class="veld">Soort<select id="dr-cat"></select></label>
+        <label class="veld">Personen<input id="dr-personen" type="number" min="1" inputmode="numeric"></label>
+      </div>
+      <div class="twee">
+        <label class="veld">Tijd<input id="dr-tijd" placeholder="bijv. 6 uur"></label>
+        <label class="veld">Kerntemperatuur<select id="dr-vlees"></select></label>
+      </div>
+      <label class="veld">Opstelling BBQ<select id="dr-opstelling"></select></label>
+      <label class="veld">Korte omschrijving<input id="dr-intro"></label>
+      <label class="veld">Ingrediënten (één per regel, bijv. "500 g gehakt")<textarea id="dr-ingredienten" rows="5"></textarea></label>
+      <label class="veld">Stappen (één per regel: "Titel – uitleg")<textarea id="dr-stappen" rows="6"></textarea></label>
+      <p class="klein grijs">Tip: zet <b>[70°]</b> voor een stap voor een melding bij die kerntemperatuur, <b>[45m]</b> voor een timer of <b>[60m↻]</b> voor een herhalende timer.</p>
+      <label class="veld">Tips (één per regel)<textarea id="dr-tips" rows="2"></textarea></label>
+      <div class="rij-knoppen">
+        <button value="annuleer" class="knop knop-licht">Annuleer</button>
+        <button value="ok" class="knop">Bewaar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="keuken" class="keuken" hidden>
+    <div class="k-kop"><span id="k-klok" class="k-klok"></span><span id="k-naam" class="k-sessie"></span><button id="k-sluit" class="k-sluit">✕</button></div>
+    <div id="k-voelers" class="k-voelers"></div>
+  </div>
 
   <div id="melding" class="melding" hidden></div>
   <script src="app.js"></script>

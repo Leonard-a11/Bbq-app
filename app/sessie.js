@@ -3,6 +3,7 @@
 import { S, voeler, log } from './staat.js';
 import { opslag } from './opslag.js';
 import { lees, bewaar, melding, fmtTijd } from './hulp.js';
+import { samenvatting } from './prestaties.js';
 
 const OPSLAG_ELKE = 5000;              // één meting per 5 s bewaren
 export const NIEUW_NA = 12 * 3600e3;   // > 12 uur niets gemeten → nieuwe sessie (bijv. de volgende dag)
@@ -33,7 +34,7 @@ async function laad(s) {
 export async function nieuweSessie(nu = Date.now()) {
   const vorige = lees('laatsteOpzet', {});
   const s = {
-    naam: standaardNaam(nu, !!S.demo), start: nu, eind: nu, open: true, demo: !!S.demo,
+    naam: standaardNaam(nu, !!S.demo), autoNaam: true, start: nu, eind: nu, open: true, demo: !!S.demo,
     voelers: [], gebeurtenissen: [], notitie: '', beoordeling: 0,
     opstelling: vorige.opstelling || null, eettijd: null,
   };
@@ -61,6 +62,7 @@ export async function rondAf(extra = {}) {
   const s = S.sessie;
   Object.assign(s, extra, { open: false });
   clearTimeout(bewaarTimer);
+  try { s.samenvatting = samenvatting(s, S.buffer); } catch { /* niet erg */ }
   if (!S.buffer.length && !(s.gebeurtenissen || []).length) await opslag.wis(s.id);
   else await opslag.sessieBewaren(s);
   log(`Sessie afgerond: ${s.naam}`);

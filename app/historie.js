@@ -8,6 +8,8 @@ import { gebeurtenisInfo, OPSTELLINGEN } from './kookboek.js';
 import { heropen, bewaarSessie, opSessie } from './sessie.js';
 import { legenda } from './live.js';
 import { bewaarBestand, verkleinFoto } from './bestand.js';
+import { BADGES, behaald, samenvatting } from './prestaties.js';
+import { maakDeelkaart, deelAfbeelding } from './deelkaart.js';
 
 export const hist = { grafiek: null, det: null, verborgen: new Set(), naarLive: () => {} };
 const fotoUrls = [];
@@ -26,6 +28,12 @@ export async function toonLijst() {
     lijst.innerHTML = '<div class="leeg"><div>🔥</div>Nog geen sessies.<br>Zodra je de thermometer verbindt, wordt alles automatisch bewaard.</div>';
     return;
   }
+  // samenvatting (voor prestaties) aanvullen bij oudere sessies
+  for (const s of sessies) {
+    if (s.open || s.samenvatting) continue;
+    try { s.samenvatting = samenvatting(s, await opslag.metingen(s.id)); await opslag.sessieBewaren(s); } catch { /* volgende keer */ }
+  }
+  const gehaald = behaald(sessies);
   const echt = sessies.filter((s) => !s.demo);
   const uren = echt.reduce((a, s) => a + (s.eind - s.start), 0) / 3600e3;
   const langste = echt.reduce((a, s) => Math.max(a, s.eind - s.start), 0);
@@ -34,7 +42,14 @@ export async function toonLijst() {
       <div><b>${echt.length}</b><span>sessies</span></div>
       <div><b>${uren.toLocaleString('nl-NL', { maximumFractionDigits: uren < 10 ? 1 : 0 })}</b><span>uur gestookt</span></div>
       <div><b>${fmtDuur(langste).replace(' ', '')}</b><span>langste cook</span></div>
-    </div>`;
+    </div>
+    <div class="sectie-kop"><h3>Prestaties</h3><span class="klein grijs">${gehaald.size}/${BADGES.length}</span></div>
+    <div class="prestaties">${BADGES.map((b) => `<button class="badge${gehaald.has(b.id) ? ' aan' : ''}" data-b="${b.id}"><span>${b.icoon}</span>${esc(b.naam)}</button>`).join('')}</div>
+    <div class="sectie-kop"><h3>Sessies</h3></div>`;
+  lijst.querySelectorAll('[data-b]').forEach((el) => {
+    const b = BADGES.find((x) => x.id === el.dataset.b);
+    el.onclick = () => melding(`${b.icoon} ${b.naam}: ${b.uitleg}${gehaald.has(b.id) ? ' ✓' : ''}`);
+  });
   for (const s of sessies) {
     const b = document.createElement('button');
     b.className = 'sessie-item';
@@ -129,6 +144,7 @@ export function koppelDetail() {
     if (!f || !hist.det) return;
     const blob = await verkleinFoto(f);
     await opslag.fotoBewaren(hist.det.s.id, blob);
+    hist.det.s.heeftFoto = true; bewaar();
     $('#det-foto').src = URL.createObjectURL(blob); $('#det-foto').hidden = false;
     melding('Foto bewaard');
   };
@@ -138,6 +154,15 @@ export function koppelDetail() {
     await heropen(hist.det.s.id);
     melding(`Verder met "${hist.det.s.naam}". Nieuwe metingen komen erbij.`);
     hist.naarLive();
+  };
+  $('#det-deel').onclick = async () => {
+    if (!hist.det) return;
+    melding('Afbeelding maken…', 2000);
+    try {
+      const { s, metingen } = hist.det;
+      const blob = await maakDeelkaart(s, metingen, await opslag.foto(s.id));
+      await deelAfbeelding(blob, s.naam);
+    } catch (e) { if (!/cancel|abort/i.test(e.message)) melding('Delen mislukt: ' + e.message, 6000); }
   };
   $('#det-csv').onclick = () => {
     if (!hist.det) return;

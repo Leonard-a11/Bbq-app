@@ -3,7 +3,7 @@ import { lees, bewaar } from './hulp.js';
 
 export const KLEUREN = ['#ff7a1a', '#3ec3ff', '#46d37f', '#c58cff', '#ffd23f', '#ff5c8a'];
 
-export const inst = Object.assign({ eenheid: lees('eenheid', 'C'), geluid: true, trillen: true }, lees('instellingen', {}));
+export const inst = Object.assign({ eenheid: lees('eenheid', 'C'), geluid: true, trillen: true, spraak: true }, lees('instellingen', {}));
 export function bewaarInst() { bewaar('instellingen', inst); }
 
 export const S = {

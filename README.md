@@ -28,6 +28,18 @@ IBT-2X, IBT-4XS, IBT-6XS en vergelijkbare). Het is een website die je in
   sterren, foto van het resultaat, notities, statistiek (gemiddelde BBQ-temp, % binnen
   bereik, stallduur), export naar Excel (CSV, met gebeurtenissen).
 - **Back-up** van alles in één bestand, en terugzetten (nieuwe telefoon).
+- **Recepten** (tab): brisket, pulled pork, spareribs 3-2-1, beef ribs, picanha, côte de
+  bœuf, kip, burnt ends, zalm op cederplank, lam, rubs, BBQ-saus, bijgerechten. Omrekenen
+  naar aantal personen, boodschappenlijst delen, favorieten, eigen recepten
+  (stappen met `[70°]` = melding bij kerntemp, `[45m]` = timer, `[60m↻]` = herhalend).
+  **Start deze cook** zet sessie, opstelling en voelers klaar en toont de stappen op Live,
+  met meldingen op het juiste moment.
+- **Planner**: vanaf de eettijd terugrekenen (aansteken, vlees erop, klaar, rusten) +
+  herinneringen. **Gidsen**: kolen-calculator (Weber 57 cm), pekel-calculator, rookhout,
+  ventielen, stall, rusten, kerntemperaturen, veiligheid.
+- **Voorspellingslijn** in de grafiek (stippellijn naar het doel), **keukenmodus**
+  (grote cijfers, ⛶), **gesproken meldingen**, **deelkaart** (afbeelding van de cook),
+  **prestaties** (badges).
 - Demo zonder thermometer.
 
 Alle gegevens blijven op je eigen telefoon.
@@ -75,7 +87,8 @@ Bluetooth werkt alleen via **https**, dus niet als los bestand op de telefoon.
   `main.js` (opstart, dialogen, instellingen), `ble.js` (iBBQ-protocol, opnieuw verbinden,
   demo), `sessie.js` (sessies, opslaan, samenvoegen, heropenen), `live.js` (analyse,
   kaarten, adviezen, kookplan, alarmen), `analyse.js` (tempo, klaar-tijd, stall, deksel),
-  `grafiek.js`, `historie.js`, `timers.js`, `alarmen.js` (geluid, meldingen,
+  `grafiek.js`, `historie.js`, `timers.js`, `recepten.js` (receptenboek), `receptui.js`
+  (recepten-tab, planner, rekenhulpen, gidsen), `prestaties.js`, `deelkaart.js`, `alarmen.js` (geluid, meldingen,
   achtergrondservice), `opslag.js` (IndexedDB + back-up), `kookboek.js` (vlees,
   opstellingen, gebeurtenissen), `native.js` (alleen in de app: Android-Bluetooth in de
   vorm van Web Bluetooth).

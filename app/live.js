@@ -1,15 +1,17 @@
 // Live-scherm: voelers, adviezen, kookplan, alarmen, grafiek, tijdlijn.
 import { S, KLEUREN, voeler, isBbq, hoogGrens, laagGrens, fmt, fmtTempo, graad } from './staat.js';
 import { $, esc, fmtTijd, fmtDuur, fmtKlok } from './hulp.js';
-import { tempo, verwachting, isStall, dekselOpen, gemiddelde } from './analyse.js';
+import { tempo, verwachting, isStall, dekselOpen, gemiddelde, voorspelLijn } from './analyse.js';
 import { VLEES, OPSTELLINGEN, gebeurtenisInfo } from './kookboek.js';
-import { gebeurtenis, wisGebeurtenis } from './sessie.js';
+import { gebeurtenis, wisGebeurtenis, bewaarSessie } from './sessie.js';
+import { vindRecept } from './receptui.js';
 import { startTimer } from './timers.js';
 import { geefAlarm, wisAlarm } from './alarmen.js';
 
 export const live = {
   bereikMin: 120, verborgen: new Set(), grafiek: null, weg: {},
   openVoeler: () => {}, // door main.js ingevuld
+  openRecept: () => {},
 };
 const OMTREK = 2 * Math.PI * 52;
 const kleur = (i) => KLEUREN[i % KLEUREN.length];
@@ -52,6 +54,84 @@ export function verwerk(st, nu) {
     if (!r.klaar) delete S.klaarOm[i];
   }
   controleerAlarmen(st, nu);
+  receptMomenten();
+}
+
+// ---------- Recept tijdens de cook ----------
+/** Stappen met een temperatuur ("bij 70°: inpakken") laten afgaan. */
+function receptMomenten() {
+  const rs = S.sessie?.recept;
+  if (!rs || rs.voeler == null) return;
+  const r = vindRecept(rs.id), c = S.temps[rs.voeler];
+  if (!r || c == null) return;
+  (r.stappen || []).forEach((s, n) => {
+    if (!s.bij || rs.klaar.includes(n) || rs.gemeld?.[n] || c < s.bij) return;
+    (rs.gemeld ||= {})[n] = true;
+    bewaarSessie();
+    geefAlarm('recept' + n, `${r.naam}: ${s.k}`, s.t);
+  });
+}
+
+let vorigeRecept = '';
+export function toonRecept() {
+  const kaart = $('#recept-kaart'), rs = S.sessie?.recept;
+  const r = rs && vindRecept(rs.id);
+  if (!r) { kaart.hidden = true; vorigeRecept = ''; return; }
+  kaart.hidden = false;
+  const stappen = r.stappen || [];
+  const c = rs.voeler != null ? S.temps[rs.voeler] : null;
+  const open = stappen.map((s, n) => ({ s, n })).filter((x) => !rs.klaar.includes(x.n));
+  const pct = stappen.length ? Math.round((rs.klaar.length / stappen.length) * 100) : 0;
+  const html = `
+    <div class="rk-kop"><span class="rk-titel">📖 ${esc(r.naam)}</span><span class="grijs klein">${rs.klaar.length}/${stappen.length}</span>
+      <button class="rk-open" type="button">Recept ›</button></div>
+    <div class="rk-balk"><i style="width:${pct}%"></i></div>
+    ${open.length ? `<ol class="rk-stappen">${open.slice(0, 3).map(({ s, n }, k) => `
+      <li class="${k === 0 ? 'volgende' : ''}${rs.gemeld?.[n] ? ' nu' : ''}">
+        <button class="vink" data-n="${n}" title="Gedaan">✓</button>
+        <div><b>${esc(s.k)}</b>${k === 0 ? `<small>${esc(s.t)}</small>` : ''}
+          <div class="stap-tags">
+            ${s.timer ? `<button class="chip" data-timer="${n}">⏱ start ${s.timer >= 60 && s.timer % 60 === 0 ? s.timer / 60 + ' u' : s.timer + ' min'}${s.herhaal ? ' ↻' : ''}</button>` : ''}
+            ${s.bij ? `<span class="chip">${rs.gemeld?.[n] ? '🔔 nu!' : `🌡️ bij ${fmt(s.bij, 0)}°${c != null ? ` · nu ${fmt(c, 0)}°` : ''}`}</span>` : ''}
+          </div></div>
+      </li>`).join('')}</ol>` : '<p class="klein">Alle stappen gedaan. Eet smakelijk! 🎉</p>'}`;
+  if (html === vorigeRecept) return;
+  vorigeRecept = html;
+  kaart.innerHTML = html;
+  kaart.querySelector('.rk-open').onclick = () => live.openRecept(r.id, rs.personen);
+  kaart.querySelectorAll('[data-n]').forEach((b) => {
+    b.onclick = () => {
+      const n = +b.dataset.n;
+      if (!rs.klaar.includes(n)) rs.klaar.push(n);
+      wisAlarm('recept' + n);
+      bewaarSessie();
+      toonRecept();
+    };
+  });
+  kaart.querySelectorAll('[data-timer]').forEach((b) => {
+    b.onclick = () => { const s = stappen[+b.dataset.timer]; startTimer(s.k, s.timer, !!s.herhaal); };
+  });
+}
+
+// ---------- Keukenmodus: grote cijfers, af te lezen van een afstand ----------
+export function toonKeuken(st) {
+  const el = $('#keuken');
+  if (el.hidden) return;
+  $('#k-naam').textContent = S.sessie?.naam || '';
+  $('#k-klok').textContent = S.sessie ? fmtKlok((S.verbonden ? Date.now() : S.sessie.eind) - S.sessie.start) : new Date().toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' });
+  const aan = st.filter((r) => r.c != null);
+  $('#k-voelers').dataset.n = aan.length;
+  $('#k-voelers').innerHTML = aan.map((r) => {
+    let sub = '';
+    if (isBbq(r.v)) sub = r.status === 'ok' ? '✓ binnen bereik' : r.status === 'koud' ? '❄ te koud' : r.status === 'heet' ? '▲ te heet' : 'BBQ';
+    else if (r.klaar) sub = '✓ klaar';
+    else if (r.stall) sub = '⏸ stall';
+    else if (r.eta?.klaarOm) sub = `klaar ± ${fmtTijd(r.eta.klaarOm)}`;
+    else if (r.v.doel != null) sub = `doel ${fmt(r.v.doel, 0)}°`;
+    const alarm = S.alarmStaat[r.i] ? ' alarm' : '';
+    return `<div class="k-voeler${alarm}" style="--k:${kleur(r.i)}"><div class="k-naam">${esc(r.v.naam)}</div>
+      <div class="k-temp">${fmt(r.c, 0)}<small>°</small></div><div class="k-sub">${esc(sub)}</div></div>`;
+  }).join('') || '<div class="k-voeler"><div class="k-naam">Geen metingen</div></div>';
 }
 
 function controleerAlarmen(st, nu) {
@@ -330,8 +410,11 @@ export function tekenLive() {
   const aantal = Math.max(S.temps.length, ...S.buffer.slice(-1).map((m) => m.v.length), 0);
   const voelers = Array.from({ length: aantal }, (_, i) => voeler(i));
   legenda($('#legenda'), voelers, S.buffer, live.verborgen, tekenLive);
+  const nu = Date.now();
+  const toekomst = S.verbonden ? toestand(nu).filter((r) => r.eta?.klaarOm && !r.stall)
+    .map((r) => ({ i: r.i, punten: voorspelLijn(r.c, r.v.doel, r.eta, nu) })).filter((f) => f.punten) : [];
   live.grafiek.zet(S.buffer, {
-    voelers, bereikMs: live.bereikMin * 60e3, gebeurtenissen: S.sessie?.gebeurtenissen || [], verborgen: live.verborgen,
+    voelers, bereikMs: live.bereikMin * 60e3, gebeurtenissen: S.sessie?.gebeurtenissen || [], verborgen: live.verborgen, toekomst,
   });
 }
 export function legenda(vak, voelers, metingen, verborgen, opnieuw) {

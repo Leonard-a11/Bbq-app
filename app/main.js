@@ -5,11 +5,13 @@ import { $, $$, bewaar, esc, melding, fmtTijd, isNative } from './hulp.js';
 import { VLEES, OPSTELLINGEN, GEBEURTENISSEN, TIMER_SNEL } from './kookboek.js';
 import * as ble from './ble.js';
 import {
-  ontgrendelGeluid, vraagMeldingen, geefAlarm, wisAlarm, stopAlarmen, achtergrondStart, achtergrondUpdate,
+  ontgrendelGeluid, vraagMeldingen, geefAlarm, wisAlarm, stopAlarmen, spreek, achtergrondStart, achtergrondUpdate,
   achtergrondStop, achtergrondStatus, accuVrijgeven, houdSchermAan, laatSchermLos,
 } from './alarmen.js';
 import { opSessie, herstel, rondAf, gebeurtenis, bewaarMeting, bewaarSessie, nieuweSessie } from './sessie.js';
-import { live, toestand, verwerk, toonVoelers, adviezen, toonAdviezen, toonPlan, toonSessie, toonKlok, tekenLive, meldingTekst, alarmenGezien } from './live.js';
+import { live, toestand, verwerk, toonVoelers, adviezen, toonAdviezen, toonPlan, toonSessie, toonKlok, tekenLive, meldingTekst, alarmenGezien, toonRecept, toonKeuken } from './live.js';
+import { rc, toonRecepten, openRecept, koppelRecepten } from './receptui.js';
+import { behaald, BADGES } from './prestaties.js';
 import { hist, toonLijst, koppelDetail, toonSterren } from './historie.js';
 import { Grafiek } from './grafiek.js';
 import { startTimer, tik as timerTik, toonTimers } from './timers.js';
@@ -17,7 +19,7 @@ import { statistiek } from './analyse.js';
 import { maakBackup, zetBackupTerug, opslag } from './opslag.js';
 import { bewaarBestand, verkleinFoto } from './bestand.js';
 
-const VERSIE = '2.0';
+const VERSIE = '3.0';
 let st = [];                 // laatste analyse per voeler
 let laatsteMeldingTekst = 0;
 
@@ -33,6 +35,8 @@ async function nieuweTemps(temps) {
     toonVoelers(st);
     toonPlan(st, nu);
     toonAdviezen(lijst);
+    toonRecept();
+    toonKeuken(st);
     if (opgeslagen) { toonSessie(); tekenLive(); }
   }
   if (nu - laatsteMeldingTekst > 15e3) {
@@ -82,6 +86,8 @@ function alles() {
   toonVoelers(st);
   toonPlan(st, nu);
   toonAdviezen(adviezen(st, nu));
+  toonRecept();
+  toonKeuken(st);
   toonTimers();
   tekenLive();
 }
@@ -141,13 +147,16 @@ async function verbreek() {
 // ---------- Tabs ----------
 function kiesTab(naam) {
   $$('.onder .tab').forEach((t) => t.classList.toggle('actief', t.dataset.tab === naam));
-  ['live', 'historie', 'instellingen'].forEach((t) => { $('#tab-' + t).hidden = t !== naam; });
+  ['live', 'recepten', 'historie', 'instellingen'].forEach((t) => { $('#tab-' + t).hidden = t !== naam; });
   if (naam === 'historie') toonLijst();
+  if (naam === 'recepten' && $('#rc-detail').hidden && $('#rc-planner').hidden && $('#rc-gidsen').hidden) toonRecepten();
   if (naam === 'live') alles();
   if (naam === 'instellingen') toonInstellingen();
   window.scrollTo(0, 0);
 }
 hist.naarLive = () => kiesTab('live');
+rc.naarLive = () => kiesTab('live');
+live.openRecept = (id, personen) => { kiesTab('recepten'); openRecept(id, personen); };
 
 // ---------- Dialoog: voeler ----------
 function openVoeler(i) {
@@ -248,7 +257,7 @@ async function openSessieDlg() {
   $('#ds-eettijd').value = s.eettijd ? new Date(s.eettijd).toTimeString().slice(0, 5) : '';
   d.onclose = () => {
     if (d.returnValue !== 'ok') return;
-    s.naam = $('#ds-naam').value.trim() || s.naam;
+    if ($('#ds-naam').value.trim() && $('#ds-naam').value.trim() !== s.naam) { s.naam = $('#ds-naam').value.trim(); s.autoNaam = false; }
     s.opstelling = $('#ds-opstelling').value || null;
     s.eettijd = $('#ds-eettijd').value ? volgendeKeer($('#ds-eettijd').value) : null;
     bewaar('laatsteOpzet', { opstelling: s.opstelling });
@@ -334,8 +343,14 @@ async function openAfronden() {
   d.onclose = async () => {
     if (d.returnValue !== 'ok') return;
     const id = s.id;
-    if (foto) await opslag.fotoBewaren(id, foto);
+    if (foto) { await opslag.fotoBewaren(id, foto); s.heeftFoto = true; }
+    const voor = behaald(await opslag.sessies());
     await rondAf({ beoordeling, notitie: $('#da-notitie').value });
+    const nieuw = [...behaald(await opslag.sessies())].filter((b) => !voor.has(b));
+    if (nieuw.length) {
+      const namen = nieuw.map((id) => BADGES.find((x) => x.id === id)).map((b) => `${b.icoon} ${b.naam}`).join(', ');
+      setTimeout(() => melding(`🏆 Nieuwe prestatie${nieuw.length > 1 ? 's' : ''}: ${namen}!`, 7000), 1500);
+    }
     if (S.verbonden) S.pauze = true; // niet meteen een nieuwe sessie beginnen
     else { await achtergrondStop(); laatSchermLos(); }
     melding('Sessie bewaard in de historie 🔥');
@@ -350,6 +365,7 @@ async function toonInstellingen() {
   $$('#inst-eenheid button').forEach((b) => b.classList.toggle('actief', b.dataset.w === inst.eenheid));
   $('#inst-geluid').checked = inst.geluid;
   $('#inst-trillen').checked = inst.trillen;
+  $('#inst-spraak').checked = inst.spraak;
   $('#versie').textContent = `BBQ Thermometer ${VERSIE}${isNative() ? ' · Android-app' : ' · webversie'}`;
   $('#zoektest').hidden = !navigator.bluetooth?.zoektest;
   $('#inst-achtergrond').hidden = !isNative();
@@ -402,6 +418,15 @@ function koppelKnoppen() {
   });
   $('#inst-geluid').onchange = (e) => { inst.geluid = e.target.checked; bewaarInst(); };
   $('#inst-trillen').onchange = (e) => { inst.trillen = e.target.checked; bewaarInst(); };
+  $('#inst-spraak').onchange = (e) => { inst.spraak = e.target.checked; bewaarInst(); if (inst.spraak) spreek('Gesproken meldingen staan aan'); };
+  // keukenmodus
+  $('#keuken-knop').onclick = () => {
+    $('#keuken').hidden = false;
+    toonKeuken(toestand());
+    document.documentElement.requestFullscreen?.().catch(() => {});
+  };
+  $('#keuken').onclick = (e) => { if (e.target.closest('#k-sluit') || e.target === $('#keuken')) sluitKeuken(); };
+  koppelRecepten();
   $('#inst-accu-knop').onclick = async () => { try { await accuVrijgeven(); } catch (e) { melding(e.message); } setTimeout(toonInstellingen, 1500); };
   $('#inst-verbind').onclick = () => { kiesTab('live'); verbind(false); };
   $('#inst-verbreek').onclick = verbreek;
@@ -419,6 +444,10 @@ function koppelKnoppen() {
     catch (err) { melding('Terugzetten mislukt: ' + err.message, 6000); }
   };
   koppelDetail();
+}
+function sluitKeuken() {
+  $('#keuken').hidden = true;
+  if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
 }
 async function kopieer(tekst) {
   try { await navigator.clipboard.writeText(tekst); melding('Gekopieerd'); } catch { melding('Kopiëren lukte niet; maak een schermafbeelding.'); }
@@ -447,7 +476,7 @@ async function start() {
 
   setInterval(() => {
     timerTik();
-    if (!document.hidden) toonKlok();
+    if (!document.hidden) { toonKlok(); if (!$('#keuken').hidden) $('#k-klok').textContent = $('#sessie-klok').textContent; }
   }, 1000);
   setInterval(() => { if (!document.hidden) alles(); }, 30e3);
   document.addEventListener('visibilitychange', () => {
