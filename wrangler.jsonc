@@ -1,7 +1,7 @@
-// Cloudflare Worker "bbq-thermometer": publiceert de map public/ als website.
+// Cloudflare Worker "bbq-app": publiceert de map public/ als website.
 // Geen build-stap nodig. De naam moet gelijk zijn aan de Worker-naam in Cloudflare.
 {
-  "name": "bbq-thermometer",
+  "name": "bbq-app",
   "compatibility_date": "2026-10-01",
   "assets": { "directory": "./public" }
 }
