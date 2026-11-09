@@ -3,6 +3,7 @@
 import { KLEUREN, naarEenheid, graad, fmt, isBbq } from './staat.js';
 import { esc, fmtTijd } from './hulp.js';
 import { gebeurtenisInfo } from './kookboek.js';
+import { ic, tekenIcoon } from './iconen.js';
 
 const GAT = 90e3; // langer dan dit niets gemeten = gat in de lijn
 
@@ -27,7 +28,7 @@ export class Grafiek {
     c.clearRect(0, 0, w, h);
     const css = getComputedStyle(document.documentElement);
     const grijs = css.getPropertyValue('--grijs').trim(), lijn = css.getPropertyValue('--lijn').trim();
-    c.font = '11px system-ui, sans-serif';
+    c.font = "600 12px 'Barlow Condensed', sans-serif";
     this.tip.hidden = true;
 
     const { voelers = [], bereikMs = 0, gebeurtenissen = [], verborgen = new Set(), toekomst = [] } = this.o;
@@ -128,7 +129,7 @@ export class Grafiek {
         vorigeT = m.t;
       }
       const g = c.createLinearGradient(0, T, 0, T + ph);
-      g.addColorStop(0, kleur + '30'); g.addColorStop(1, kleur + '00');
+      g.addColorStop(0, kleur + '1c'); g.addColorStop(1, kleur + '00');
       for (const s of stukken) {
         if (s.length < 2) continue;
         c.beginPath(); c.moveTo(s[0][0], T + ph);
@@ -142,7 +143,6 @@ export class Grafiek {
       const laatste = stukken.length && stukken[stukken.length - 1];
       if (laatste && laatste.length && !this.o.historie) {
         const [x, y] = laatste[laatste.length - 1];
-        c.fillStyle = kleur + '40'; c.beginPath(); c.arc(x, y, 7, 0, 7); c.fill();
         c.fillStyle = kleur; c.beginPath(); c.arc(x, y, 3.5, 0, 7); c.fill();
       }
     }
@@ -163,13 +163,13 @@ export class Grafiek {
         if (te <= t1) {
           const x = X(te), y = Y(naarEenheid(ye));
           c.fillStyle = k; c.beginPath(); c.arc(x, y, 4, 0, 7); c.fill();
-          c.font = 'bold 11px system-ui, sans-serif'; c.textBaseline = 'bottom';
+          c.font = "700 12px 'Barlow Condensed', sans-serif"; c.textBaseline = 'bottom';
           c.textAlign = x > w - 60 ? 'right' : 'center';
-          c.fillText(`✓ ${fmtTijd(te)}`, x, y - 6);
+          c.fillText(`KLAAR ${fmtTijd(te)}`, x, y - 6);
         }
       }
       c.restore();
-      c.font = '11px system-ui, sans-serif';
+      c.font = "600 12px 'Barlow Condensed', sans-serif";
     }
 
     // gebeurtenissen
@@ -180,7 +180,7 @@ export class Grafiek {
       const x = X(g.t);
       c.strokeStyle = grijs + '88'; c.setLineDash([2, 3]);
       c.beginPath(); c.moveTo(x, T); c.lineTo(x, T + ph); c.stroke(); c.setLineDash([]);
-      if (x - vorigeX > 16) { c.fillText(gebeurtenisInfo(g.type).icoon, x, 2); vorigeX = x; }
+      if (x - vorigeX > 16) { tekenIcoon(c, gebeurtenisInfo(g.type).icoon, x, 10, 15, grijs); vorigeX = x; }
     }
 
     // aanwijzer
@@ -198,7 +198,7 @@ export class Grafiek {
       const bij = zicht.filter((g) => Math.abs(X(g.t) - bx) < 12);
       this.tip.innerHTML = `<b>${new Date(best.t).toLocaleTimeString('nl-NL')}</b>`
         + zichtbaar.map((i) => (best.v[i] == null ? '' : `<span><i style="background:${KLEUREN[i % KLEUREN.length]}"></i>${esc((voelers[i] || {}).naam || `Voeler ${i + 1}`)}: ${fmt(best.v[i])}${graad()}</span>`)).join('')
-        + bij.map((g) => `<span>${gebeurtenisInfo(g.type).icoon} ${esc(g.tekst || gebeurtenisInfo(g.type).label)}</span>`).join('');
+        + bij.map((g) => `<span>${ic(gebeurtenisInfo(g.type).icoon)} ${esc(gebeurtenisInfo(g.type).label)}${g.tekst ? ': ' + esc(g.tekst) : ''}</span>`).join('');
       this.tip.hidden = false;
       const tw = this.tip.offsetWidth;
       this.tip.style.left = (bx + 12 + tw > w ? Math.max(0, bx - 12 - tw) : bx + 12) + 'px';

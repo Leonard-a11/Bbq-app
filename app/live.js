@@ -1,6 +1,7 @@
 // Live-scherm: voelers, adviezen, kookplan, alarmen, grafiek, tijdlijn.
 import { S, KLEUREN, voeler, isBbq, hoogGrens, laagGrens, fmt, fmtTempo, graad } from './staat.js';
 import { $, esc, fmtTijd, fmtDuur, fmtKlok } from './hulp.js';
+import { ic } from './iconen.js';
 import { tempo, verwachting, isStall, dekselOpen, gemiddelde, voorspelLijn } from './analyse.js';
 import { VLEES, OPSTELLINGEN, gebeurtenisInfo } from './kookboek.js';
 import { gebeurtenis, wisGebeurtenis, bewaarSessie } from './sessie.js';
@@ -13,7 +14,7 @@ export const live = {
   openVoeler: () => {}, // door main.js ingevuld
   openRecept: () => {},
 };
-const OMTREK = 2 * Math.PI * 52;
+const OMTREK = 2 * Math.PI * 50;
 const kleur = (i) => KLEUREN[i % KLEUREN.length];
 
 // ---------- Analyse per voeler ----------
@@ -83,18 +84,18 @@ export function toonRecept() {
   const open = stappen.map((s, n) => ({ s, n })).filter((x) => !rs.klaar.includes(x.n));
   const pct = stappen.length ? Math.round((rs.klaar.length / stappen.length) * 100) : 0;
   const html = `
-    <div class="rk-kop"><span class="rk-titel">📖 ${esc(r.naam)}</span><span class="grijs klein">${rs.klaar.length}/${stappen.length}</span>
-      <button class="rk-open" type="button">Recept ›</button></div>
+    <div class="rk-kop"><span class="rk-titel">${esc(r.naam)}</span><span class="rk-teller">${rs.klaar.length}/${stappen.length}</span>
+      <button class="rk-open" type="button">Recept</button></div>
     <div class="rk-balk"><i style="width:${pct}%"></i></div>
     ${open.length ? `<ol class="rk-stappen">${open.slice(0, 3).map(({ s, n }, k) => `
       <li class="${k === 0 ? 'volgende' : ''}${rs.gemeld?.[n] ? ' nu' : ''}">
-        <button class="vink" data-n="${n}" title="Gedaan">✓</button>
+        <button class="vink" data-n="${n}" title="Gedaan">${ic('vink')}</button>
         <div><b>${esc(s.k)}</b>${k === 0 ? `<small>${esc(s.t)}</small>` : ''}
           <div class="stap-tags">
-            ${s.timer ? `<button class="chip" data-timer="${n}">⏱ start ${s.timer >= 60 && s.timer % 60 === 0 ? s.timer / 60 + ' u' : s.timer + ' min'}${s.herhaal ? ' ↻' : ''}</button>` : ''}
-            ${s.bij ? `<span class="chip">${rs.gemeld?.[n] ? '🔔 nu!' : `🌡️ bij ${fmt(s.bij, 0)}°${c != null ? ` · nu ${fmt(c, 0)}°` : ''}`}</span>` : ''}
+            ${s.timer ? `<button class="chip" data-timer="${n}">${ic('timer')}start ${s.timer >= 60 && s.timer % 60 === 0 ? s.timer / 60 + ' u' : s.timer + ' min'}${s.herhaal ? ' ↻' : ''}</button>` : ''}
+            ${s.bij ? `<span class="chip">${rs.gemeld?.[n] ? `${ic('bel')}nu` : `${ic('thermo')}bij ${fmt(s.bij, 0)}°${c != null ? ` · nu ${fmt(c, 0)}°` : ''}`}</span>` : ''}
           </div></div>
-      </li>`).join('')}</ol>` : '<p class="klein">Alle stappen gedaan. Eet smakelijk! 🎉</p>'}`;
+      </li>`).join('')}</ol>` : '<p class="klein grijs">Alle stappen gedaan. Eet smakelijk.</p>'}`;
   if (html === vorigeRecept) return;
   vorigeRecept = html;
   kaart.innerHTML = html;
@@ -123,12 +124,12 @@ export function toonKeuken(st) {
   $('#k-voelers').dataset.n = aan.length;
   $('#k-voelers').innerHTML = aan.map((r) => {
     let sub = '';
-    if (isBbq(r.v)) sub = r.status === 'ok' ? '✓ binnen bereik' : r.status === 'koud' ? '❄ te koud' : r.status === 'heet' ? '▲ te heet' : 'BBQ';
-    else if (r.klaar) sub = '✓ klaar';
-    else if (r.stall) sub = '⏸ stall';
+    if (isBbq(r.v)) sub = r.status === 'ok' ? 'binnen bereik' : r.status === 'koud' ? 'te koud' : r.status === 'heet' ? 'te heet' : 'BBQ';
+    else if (r.klaar) sub = 'klaar';
+    else if (r.stall) sub = 'stall';
     else if (r.eta?.klaarOm) sub = `klaar ± ${fmtTijd(r.eta.klaarOm)}`;
     else if (r.v.doel != null) sub = `doel ${fmt(r.v.doel, 0)}°`;
-    const alarm = S.alarmStaat[r.i] ? ' alarm' : '';
+    const alarm = S.alarmStaat[r.i] ? ' k-alarm' : '';
     return `<div class="k-voeler${alarm}" style="--k:${kleur(r.i)}"><div class="k-naam">${esc(r.v.naam)}</div>
       <div class="k-temp">${fmt(r.c, 0)}<small>°</small></div><div class="k-sub">${esc(sub)}</div></div>`;
   }).join('') || '<div class="k-voeler"><div class="k-naam">Geen metingen</div></div>';
@@ -172,8 +173,16 @@ export function alarmenGezien() {
 }
 
 // ---------- Voelerkaarten ----------
+// Wijzerplaat van 270° (zoals de thermometer op het deksel), met maatstreepjes
+const BOOG = 0.75 * OMTREK;
+const STREPEN = Array.from({ length: 31 }, (_, k) => {
+  const hoek = ((135 + k * 9) * Math.PI) / 180, groot = k % 5 === 0;
+  const r1 = groot ? 54 : 55.5, r2 = 59;
+  const p = (r) => `${(60 + r * Math.cos(hoek)).toFixed(1)} ${(60 + r * Math.sin(hoek)).toFixed(1)}`;
+  return `<path class="ring-streep${groot ? ' groot' : ''}" d="M${p(r1)} L${p(r2)}"/>`;
+}).join('');
 function ringSvg() {
-  return `<svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"/><circle class="ring-band" cx="60" cy="60" r="52"/><circle class="ring-vg" cx="60" cy="60" r="52"/></svg>`;
+  return `<svg viewBox="0 0 120 120">${STREPEN}<g transform="rotate(135 60 60)"><circle class="ring-bg" cx="60" cy="60" r="50" style="stroke-dasharray:${BOOG} ${OMTREK}"/><circle class="ring-band" cx="60" cy="60" r="50"/><circle class="ring-vg" cx="60" cy="60" r="50"/></g></svg>`;
 }
 export function toonVoelers(st) {
   const vak = $('#voelers');
@@ -185,7 +194,7 @@ export function toonVoelers(st) {
     const volgorde = [...aan].sort((a, b) => (b.i === heroI) - (a.i === heroI));
     vak.innerHTML = volgorde.map((r) => `
       <button class="voeler${r.i === heroI ? ' hero' : ''}" data-i="${r.i}">
-        <span class="v-instel">⚙</span>
+        <span class="v-instel">${ic('schuif')}</span>
         <div class="v-kop"><i class="stip"></i><span class="v-naam"></span><span class="v-badge"></span></div>
         <div class="v-ring">${ringSvg()}<div class="v-temp"><b></b><span class="v-doel"></span></div></div>
         <div class="v-info"><div class="v-eta"></div><div class="v-tempo"></div></div>
@@ -219,16 +228,16 @@ function vulKaart(el, r) {
     p = c / schaal;
     if (v.min != null || v.max != null) {
       const a = (v.min ?? 0) / schaal, b = (v.max ?? schaal) / schaal;
-      band.style.stroke = 'var(--goed)';
-      band.style.strokeDasharray = `${(b - a) * OMTREK} ${OMTREK}`;
-      band.style.strokeDashoffset = `${-a * OMTREK}`;
+      band.style.stroke = 'rgba(147, 181, 111, .35)';
+      band.style.strokeDasharray = `${(b - a) * BOOG} ${OMTREK}`;
+      band.style.strokeDashoffset = `${-a * BOOG}`;
       doel = v.max != null && v.min != null ? `${fmt(v.min, 0)}–${fmt(v.max, 0)}°` : v.min != null ? `min ${fmt(v.min, 0)}°` : `max ${fmt(v.max, 0)}°`;
     } else { band.style.strokeDasharray = `0 ${OMTREK}`; doel = 'stel bereik in'; }
     ringKleur = r.status === 'ok' ? 'var(--goed)' : r.status === 'koud' ? 'var(--koud)' : r.status === 'heet' ? 'var(--gevaar)' : k;
     if (r.deksel) { badge = 'DEKSEL'; badgeKlasse = 'deksel'; eta = 'deksel open?'; }
     else if (r.status === 'heet') { badge = 'TE HEET'; badgeKlasse = 'heet'; eta = `${fmt(c - v.max, 0)}° te heet`; }
     else if (r.status === 'koud') { badge = 'TE KOUD'; badgeKlasse = 'koud'; eta = `${fmt(v.min - c, 0)}° te koud`; }
-    else if (r.status === 'ok') { badge = '✓'; badgeKlasse = 'ok'; eta = 'binnen bereik'; }
+    else if (r.status === 'ok') { badge = 'OK'; badgeKlasse = 'ok'; eta = 'binnen bereik'; }
     else eta = 'BBQ-temperatuur';
   } else {
     band.style.strokeDasharray = `0 ${OMTREK}`;
@@ -236,7 +245,7 @@ function vulKaart(el, r) {
       const start = Math.min(S.startTemp[i] ?? c, v.doel - 1);
       p = (c - start) / (v.doel - start);
       doel = `doel ${fmt(v.doel, 0)}°`;
-    } else { p = c / 100; doel = 'tik ⚙ voor doel'; }
+    } else { p = c / 100; doel = 'tik voor doel'; }
     if (r.klaar) { badge = 'KLAAR'; badgeKlasse = 'klaar'; eta = v.rust ? `Klaar! ${v.rust} min rusten` : 'Klaar!'; ringKleur = 'var(--goed)'; }
     else if (r.stall) { badge = 'STALL'; badgeKlasse = 'stall'; eta = 'stall – geduld'; }
     else if (r.eta?.klaarOm) eta = `klaar ± ${fmtTijd(r.eta.klaarOm)} · ${fmtDuur(r.eta.minuten * 60e3)}`;
@@ -244,9 +253,8 @@ function vulKaart(el, r) {
     else eta = VLEES.find((x) => x.id === v.preset)?.naam || '';
   }
   p = Math.max(0.02, Math.min(1, p || 0));
-  vg.style.stroke = ringKleur; vg.style.color = ringKleur;
-  vg.style.strokeDasharray = `${OMTREK}`;
-  vg.style.strokeDashoffset = `${OMTREK * (1 - p)}`;
+  vg.style.stroke = ringKleur;
+  vg.style.strokeDasharray = `${BOOG * p} ${OMTREK}`;
   el.querySelector('.v-doel').textContent = doel;
   const b = el.querySelector('.v-badge');
   b.textContent = badge; b.className = 'v-badge ' + badgeKlasse; b.hidden = !badge;
@@ -264,10 +272,10 @@ export function adviezen(st, nu) {
     if (isBbq(v)) {
       if (r.status !== 'koud') delete S.onderSinds[i];
       if (r.deksel) {
-        lijst.push({ id: 'deksel' + i, soort: 'koud', icoon: '👀', titel: 'Deksel open?',
+        lijst.push({ id: 'deksel' + i, soort: 'koud', icoon: 'oog', titel: 'Deksel open?',
           tekst: 'De temperatuur zakte ineens. Houd de deksel zo veel mogelijk dicht: elke keer kijken kost al gauw 10–15 minuten extra.' });
       } else if (r.status === 'heet') {
-        lijst.push({ id: 'heet' + i, soort: 'let-op', icoon: '🌡️', titel: `${v.naam} te heet: ${fmt(c, 0)}°`,
+        lijst.push({ id: 'heet' + i, soort: 'let-op', icoon: 'heet', titel: `${v.naam} te heet: ${fmt(c, 0)}°`,
           tekst: `Boven de ${fmt(v.max, 0)}°. Draai het onderste ventiel een stukje dichter en geef het 10–15 min. Het deksel-ventiel open laten voor schone rook.`,
           knoppen: [{ label: 'Ventiel versteld', fn: () => gebeurtenis('ventiel', 'dichter') }] });
       } else if (r.status === 'koud' && S.boven?.[i]) {
@@ -275,11 +283,11 @@ export function adviezen(st, nu) {
         const duur = nu - S.onderSinds[i];
         const t15 = tempo(S.buffer, i, nu, 15 * 60e3);
         if (duur > 15 * 60e3 && (t15 == null || t15 < 1)) {
-          lijst.push({ id: 'kolen' + i, soort: 'let-op', icoon: '🔥', titel: 'Kolen raken op?',
+          lijst.push({ id: 'kolen' + i, soort: 'let-op', icoon: 'kolen', titel: 'Kolen raken op?',
             tekst: `Al ${fmtDuur(duur)} onder de ${fmt(v.min, 0)}° en hij komt niet terug. Vul bij met een paar aangestoken briketten, of zet het onderste ventiel verder open.`,
             knoppen: [{ label: 'Kolen bijgevuld', fn: () => gebeurtenis('kolen') }] });
         } else {
-          lijst.push({ id: 'koud' + i, soort: 'koud', icoon: '❄️', titel: `${v.naam} te koud: ${fmt(c, 0)}°`,
+          lijst.push({ id: 'koud' + i, soort: 'koud', icoon: 'koud', titel: `${v.naam} te koud: ${fmt(c, 0)}°`,
             tekst: `Onder de ${fmt(v.min, 0)}°. Zet het onderste ventiel iets verder open en geef het 10–15 min voor je weer bijstelt.`,
             knoppen: [{ label: 'Ventiel versteld', fn: () => gebeurtenis('ventiel', 'verder open') }] });
         }
@@ -290,14 +298,14 @@ export function adviezen(st, nu) {
         const knoppen = [];
         if (v.rust) knoppen.push({ label: `Rusttimer ${v.rust} min`, fn: () => { startTimer(`Rusten: ${v.naam}`, v.rust); gebeurtenis('eraf', v.naam); } });
         else knoppen.push({ label: 'Van de BBQ', fn: () => gebeurtenis('eraf', v.naam) });
-        lijst.push({ id: 'klaar' + i, soort: 'goed', icoon: '🎉', titel: `${v.naam} is klaar!`,
+        lijst.push({ id: 'klaar' + i, soort: 'goed', icoon: 'vinkRond', titel: `${v.naam} is klaar!`,
           tekst: `Haal het van de BBQ${v.rust ? ` en laat het ${v.rust} minuten rusten` : ''}. Tijdens het rusten stijgt de kern nog 1–3°.`, knoppen });
       } else if (r.stall) {
-        lijst.push({ id: 'stall' + i, soort: '', icoon: '⏸️', titel: `Stall bij ${v.naam} (${fmt(c, 0)}°)`,
+        lijst.push({ id: 'stall' + i, soort: '', icoon: 'pauze', titel: `Stall bij ${v.naam} (${fmt(c, 0)}°)`,
           tekst: 'Het vlees blijft hangen doordat vocht aan het oppervlak verdampt. Heel normaal, kan uren duren. Sneller: inpakken in slagerspapier of folie (Texas crutch).',
           knoppen: [{ label: 'Ingepakt', fn: () => gebeurtenis('ingepakt', v.naam) }] });
       } else if (r.eta?.minuten != null && r.eta.minuten < 15) {
-        lijst.push({ id: 'bijna' + i, soort: 'goed', icoon: '⏳', titel: `${v.naam} bijna klaar`,
+        lijst.push({ id: 'bijna' + i, soort: 'goed', icoon: 'zandloper', titel: `${v.naam} bijna klaar`,
           tekst: `Nog ± ${Math.max(1, Math.round(r.eta.minuten))} min.${p?.tip ? ' ' + p.tip : ''}` });
       }
     }
@@ -309,11 +317,11 @@ let vorigeAdviezen = '';
 export function toonAdviezen(lijst) {
   const html = lijst.map((a) => `
     <div class="advies ${a.soort}" data-id="${a.id}">
-      <div class="a-icoon">${a.icoon}</div>
+      <div class="a-icoon">${ic(a.icoon)}</div>
       <div class="a-tekst"><b>${esc(a.titel)}</b><span>${esc(a.tekst)}</span>
         ${a.knoppen?.length ? `<div class="a-knoppen">${a.knoppen.map((k, n) => `<button data-n="${n}">${esc(k.label)}</button>`).join('')}</div>` : ''}
       </div>
-      <button class="a-weg" title="Verbergen">×</button>
+      <button class="a-weg" title="Verbergen">${ic('kruis')}</button>
     </div>`).join('');
   if (html === vorigeAdviezen) return;
   vorigeAdviezen = html;
@@ -343,24 +351,24 @@ export function toonPlan(st, nu) {
     else { onbekend = true; if (r.stall) stall = true; continue; }
     laatste = Math.max(laatste ?? 0, klaar);
   }
-  let soort = '', icoon = '🍽️', titel, tekst;
+  let soort = '', icoon = 'bord', titel, tekst;
   if (!vlees.length) { titel = `Eten om ${fmtTijd(eet)}`; tekst = 'Geef een vleesvoeler een doeltemperatuur, dan reken ik uit of je op schema ligt.'; }
   else if (laatste == null || (onbekend && laatste < eet)) {
     titel = `Eten om ${fmtTijd(eet)}`;
     tekst = stall ? 'Het vlees zit in de stall; de klaar-tijd volgt zodra het weer stijgt.' : 'De klaar-tijd volgt zodra het tempo bekend is (± 15 min meten).';
   } else {
     const verschil = eet - laatste;
-    if (Math.abs(verschil) <= 15 * 60e3) { soort = 'goed'; icoon = '✅'; titel = `Op schema voor ${fmtTijd(eet)}`; tekst = `Klaar inclusief rusten rond ${fmtTijd(laatste)}.`; }
+    if (Math.abs(verschil) <= 15 * 60e3) { soort = 'goed'; icoon = 'vinkRond'; titel = `Op schema voor ${fmtTijd(eet)}`; tekst = `Klaar inclusief rusten rond ${fmtTijd(laatste)}.`; }
     else if (verschil < 0) {
-      soort = 'laat'; icoon = '⚠️'; titel = `± ${fmtDuur(-verschil)} te laat voor ${fmtTijd(eet)}`;
+      soort = 'laat'; icoon = 'let'; titel = `± ${fmtDuur(-verschil)} te laat voor ${fmtTijd(eet)}`;
       tekst = `Verwacht klaar inclusief rusten rond ${fmtTijd(laatste)}. Zet de BBQ 10–15° hoger${stall ? ', of pak het vlees in' : ''}.`;
     } else {
-      soort = 'vroeg'; icoon = '🕐'; titel = `± ${fmtDuur(verschil)} ruim op tijd`;
+      soort = 'vroeg'; icoon = 'timer'; titel = `± ${fmtDuur(verschil)} ruim op tijd`;
       tekst = `Klaar inclusief rusten rond ${fmtTijd(laatste)}. Geen probleem: ingepakt in een koelbox met handdoeken blijft het uren warm.`;
     }
   }
   el.className = 'plan ' + soort;
-  el.innerHTML = `<div class="plan-icoon">${icoon}</div><div><b>${esc(titel)}</b><span class="klein grijs">${esc(tekst)}</span></div>`;
+  el.innerHTML = `<div class="plan-icoon">${ic(icoon)}</div><div><b>${esc(titel)}</b><span class="klein grijs">${esc(tekst)}</span></div>`;
 }
 
 // ---------- Sessiekop ----------
@@ -376,11 +384,11 @@ export function toonSessie() {
   $('#sessie-naam').textContent = s.naam;
   const chips = [];
   const op = OPSTELLINGEN.find((o) => o.id === s.opstelling);
-  if (op) chips.push(`🔥 ${op.naam.split(' – ')[0]}`);
-  if (s.eettijd) chips.push(`🍽️ eten ${fmtTijd(s.eettijd)}`);
-  chips.push(`📈 ${S.buffer.length} metingen`);
-  if (!S.verbonden) chips.push('📴 niet verbonden – sessie loopt door');
-  const html = chips.map((c) => `<span class="chip">${esc(c)}</span>`).join('');
+  if (op) chips.push(['vlam', op.naam.split(' – ')[0]]);
+  if (s.eettijd) chips.push(['bord', `eten ${fmtTijd(s.eettijd)}`]);
+  chips.push(['grafiek', `${S.buffer.length} metingen`]);
+  if (!S.verbonden) chips.push(['btUit', 'niet verbonden · sessie loopt door']);
+  const html = chips.map(([i, c]) => `<span class="chip">${ic(i)}${esc(c)}</span>`).join('');
   if ($('#sessie-chips').innerHTML !== html) $('#sessie-chips').innerHTML = html;
   toonKlok();
   toonTijdlijn();
@@ -394,9 +402,9 @@ function toonTijdlijn() {
   const html = g.map((x) => {
     const info = gebeurtenisInfo(x.type);
     const handmatig = !['verbindingWeg', 'verbindingTerug', 'klaar', 'stall', 'dekselAuto'].includes(x.type);
-    return `<li><span class="tl-tijd">${fmtTijd(x.t)}</span><span class="tl-icoon">${info.icoon}</span>
+    return `<li><span class="tl-tijd">${fmtTijd(x.t)}</span><span class="tl-icoon">${ic(info.icoon)}</span>
       <span class="tl-tekst">${esc(info.label)}${x.tekst ? ` <small>${esc(x.tekst)}</small>` : ''}</span>
-      ${handmatig ? `<button data-t="${x.t}" title="Verwijderen">×</button>` : ''}</li>`;
+      ${handmatig ? `<button data-t="${x.t}" title="Verwijderen">${ic('kruis')}</button>` : ''}</li>`;
   }).join('');
   const ol = $('#tijdlijn');
   if (ol.innerHTML === html) return;
@@ -439,5 +447,5 @@ export function meldingTekst(st) {
     if (r.eta?.klaarOm) return `${r.v.naam}: klaar ± ${fmtTijd(r.eta.klaarOm)}`;
     return r.v.doel != null ? `${r.v.naam}: doel ${fmt(r.v.doel, 0)}°` : null;
   }).filter(Boolean);
-  return { titel: (S.verbonden ? '' : '📴 ') + titel, tekst: regels.join(' · ') || 'Meten…' };
+  return { titel: (S.verbonden ? '' : 'Geen verbinding · ') + titel, tekst: regels.join(' · ') || 'Meten…' };
 }

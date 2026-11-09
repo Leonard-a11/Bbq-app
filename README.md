@@ -28,8 +28,8 @@ IBT-2X, IBT-4XS, IBT-6XS en vergelijkbare). Het is een website die je in
   sterren, foto van het resultaat, notities, statistiek (gemiddelde BBQ-temp, % binnen
   bereik, stallduur), export naar Excel (CSV, met gebeurtenissen).
 - **Back-up** van alles in één bestand, en terugzetten (nieuwe telefoon).
-- **Recepten** (tab): brisket, pulled pork, spareribs 3-2-1, beef ribs, picanha, côte de
-  bœuf, kip, burnt ends, zalm op cederplank, lam, rubs, BBQ-saus, bijgerechten. Omrekenen
+- **Recepten** (tab): 80 recepten in rund, varken, gevogelte, vis, lam, wild, vega, rubs &
+  sauzen, bijgerechten en desserts (`app/recepten.js` + `app/recepten-meer.js`). Omrekenen
   naar aantal personen, boodschappenlijst delen, favorieten, eigen recepten
   (stappen met `[70°]` = melding bij kerntemp, `[45m]` = timer, `[60m↻]` = herhalend).
   **Start deze cook** zet sessie, opstelling en voelers klaar en toont de stappen op Live,
@@ -79,6 +79,13 @@ Zelfde manier als de Hevotec-offertesite: Cloudflare dashboard → Workers & Pag
 Create → Import a repository → deze repo kiezen. `wrangler.jsonc` publiceert de map
 `public/` (geen build-stap). Elke push naar `main` gaat vanzelf online.
 Bluetooth werkt alleen via **https**, dus niet als los bestand op de telefoon.
+
+## Vormgeving
+
+Smokehouse-stijl: houtskool (#121110), crème tekst, één sintelkleur (#e8642e), geen
+verlopen of gloed. Lettertypen meegeleverd in `public/fonts/` (Barlow Condensed voor
+koppen en cijfers, Barlow voor tekst, Fraunces voor receptnamen). Eigen lijn-iconen in
+`app/iconen.js` (ook op canvas te tekenen), geen emoji's. Voelers als wijzerplaat van 270°.
 
 ## Techniek
 

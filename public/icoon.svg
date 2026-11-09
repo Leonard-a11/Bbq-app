@@ -1,7 +1,36 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#16181d"/>
-  <path d="M256 70c-33 0-60 27-60 60v170a92 92 0 1 0 120 0V130c0-33-27-60-60-60z" fill="none" stroke="#eef0f4" stroke-width="28"/>
-  <path d="M256 200v120" stroke="#ff7a1a" stroke-width="36" stroke-linecap="round"/>
-  <circle cx="256" cy="372" r="56" fill="#ff7a1a"/>
-  <path d="M340 150h48M340 210h36M340 270h48" stroke="#9aa1ae" stroke-width="20" stroke-linecap="round"/>
+<rect width="512" height="512" rx="112" fill="#121110"/>
+<line x1="149.9" y1="376.1" x2="125.9" y2="400.1" stroke="#efe7da" stroke-width="14" stroke-linecap="round"/>
+<line x1="121.7" y1="367.6" x2="107.1" y2="378.2" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="108.1" y1="345.4" x2="92.1" y2="353.5" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="98.1" y1="321.3" x2="81.0" y2="326.9" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="92.0" y1="296.0" x2="74.3" y2="298.8" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="106.0" y1="270.0" x2="72.0" y2="270.0" stroke="#efe7da" stroke-width="14" stroke-linecap="round"/>
+<line x1="92.0" y1="244.0" x2="74.3" y2="241.2" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="98.1" y1="218.7" x2="81.0" y2="213.1" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="108.1" y1="194.6" x2="92.1" y2="186.5" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="121.7" y1="172.4" x2="107.1" y2="161.8" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="149.9" y1="163.9" x2="125.9" y2="139.9" stroke="#efe7da" stroke-width="14" stroke-linecap="round"/>
+<line x1="158.4" y1="135.7" x2="147.8" y2="121.1" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="180.6" y1="122.1" x2="172.5" y2="106.1" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="204.7" y1="112.1" x2="199.1" y2="95.0" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="230.0" y1="106.0" x2="227.2" y2="88.3" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="256.0" y1="120.0" x2="256.0" y2="86.0" stroke="#efe7da" stroke-width="14" stroke-linecap="round"/>
+<line x1="282.0" y1="106.0" x2="284.8" y2="88.3" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="307.3" y1="112.1" x2="312.9" y2="95.0" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="331.4" y1="122.1" x2="339.5" y2="106.1" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="353.6" y1="135.7" x2="364.2" y2="121.1" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="362.1" y1="163.9" x2="386.1" y2="139.9" stroke="#efe7da" stroke-width="14" stroke-linecap="round"/>
+<line x1="390.3" y1="172.4" x2="404.9" y2="161.8" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="403.9" y1="194.6" x2="419.9" y2="186.5" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="413.9" y1="218.7" x2="431.0" y2="213.1" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="420.0" y1="244.0" x2="437.7" y2="241.2" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="406.0" y1="270.0" x2="440.0" y2="270.0" stroke="#efe7da" stroke-width="14" stroke-linecap="round"/>
+<line x1="420.0" y1="296.0" x2="437.7" y2="298.8" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="413.9" y1="321.3" x2="431.0" y2="326.9" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="403.9" y1="345.4" x2="419.9" y2="353.5" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="390.3" y1="367.6" x2="404.9" y2="378.2" stroke="#6e665c" stroke-width="8" stroke-linecap="round"/>
+<line x1="362.1" y1="376.1" x2="386.1" y2="400.1" stroke="#efe7da" stroke-width="14" stroke-linecap="round"/>
+<path d="M380.7 206.4 L264.2 286.0 L247.8 254.0Z" fill="#e8642e"/>
+<circle cx="256" cy="270" r="30" fill="#2e2a26" stroke="#e8642e" stroke-width="12"/>
 </svg>

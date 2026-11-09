@@ -18,6 +18,7 @@ import { startTimer, tik as timerTik, toonTimers } from './timers.js';
 import { statistiek } from './analyse.js';
 import { maakBackup, zetBackupTerug, opslag } from './opslag.js';
 import { bewaarBestand, verkleinFoto } from './bestand.js';
+import { ic } from './iconen.js';
 
 const VERSIE = '3.0';
 let st = [];                 // laatste analyse per voeler
@@ -56,7 +57,7 @@ function toonStatus(tekst) {
   el.innerHTML = `<i class="stip"></i><span>${esc(t)}</span>`;
   const b = $('#batterij');
   b.hidden = S.batterij == null || !S.verbonden;
-  b.textContent = `🔋 ${S.batterij}%`;
+  b.innerHTML = `${ic('batterij')} ${S.batterij}%`;
   b.classList.toggle('laag', S.batterij != null && S.batterij < 20);
   toonVerbinden();
 }
@@ -124,7 +125,7 @@ ble.opvang.verbroken = () => {
   S.wasWeg = true;
   if (S.sessie) gebeurtenis('verbindingWeg');
   alles();
-  achtergrondUpdate('📴 Verbinding met thermometer weg', 'Opnieuw verbinden… De sessie loopt door.');
+  achtergrondUpdate('Verbinding met thermometer weg', 'Opnieuw verbinden… De sessie loopt door.');
   clearTimeout(kwijtTimer);
   kwijtTimer = setTimeout(() => {
     if (!S.verbonden && !S.handmatigLos) {
@@ -284,14 +285,14 @@ function openGebeurtenis() {
   if (!S.sessie) { melding('Er loopt nog geen sessie.'); return; }
   const d = $('#dlg-gebeurtenis');
   $('#dg-tekst').value = '';
-  $('#dg-knoppen').innerHTML = GEBEURTENISSEN.map((g) => `<button type="button" data-type="${g.type}"><span>${g.icoon}</span>${esc(g.label)}</button>`).join('');
+  $('#dg-knoppen').innerHTML = GEBEURTENISSEN.map((g) => `<button type="button" data-type="${g.type}">${ic(g.icoon)}${esc(g.label)}</button>`).join('');
   $$('#dg-knoppen button').forEach((b) => {
     b.onclick = () => {
       const g = GEBEURTENISSEN.find((x) => x.type === b.dataset.type);
       gebeurtenis(g.type, $('#dg-tekst').value.trim());
       if (g.type === 'deksel') { S.dekselTot = Date.now() + 5 * 60e3; S.dekselVoeler = S.temps.findIndex((_, i) => isBbq(voeler(i))); }
       d.close();
-      melding(`${g.icoon} ${g.label} vastgelegd`);
+      melding(`${g.label} vastgelegd`);
       tekenLive();
     };
   });
@@ -312,7 +313,7 @@ function openTimer() {
     const min = parseFloat(String($('#dt-min').value).replace(',', '.'));
     if (!(min > 0)) return;
     startTimer($('#dt-naam').value.trim() || 'Timer', min, $('#dt-herhaal').checked);
-    melding(`⏱ Timer ${min} min gestart`);
+    melding(`Timer van ${min} min gestart`);
   };
   d.returnValue = '';
   d.showModal();
@@ -324,7 +325,7 @@ async function openAfronden() {
   const s = S.sessie, d = $('#dlg-afronden');
   let beoordeling = s.beoordeling || 0, foto = null;
   const duur = s.eind - s.start;
-  let html = `<div class="stat">⏱ <b>${Math.floor(duur / 3600e3)}u ${String(Math.round(duur / 60e3) % 60).padStart(2, '0')}m</b></div>`;
+  let html = `<div class="stat">Duur <b>${Math.floor(duur / 3600e3)}u ${String(Math.round(duur / 60e3) % 60).padStart(2, '0')}m</b></div>`;
   (s.voelers || []).forEach((v, i) => {
     const r = statistiek(S.buffer, i, isBbq(v) ? v : null);
     if (!r) return;
@@ -348,12 +349,12 @@ async function openAfronden() {
     await rondAf({ beoordeling, notitie: $('#da-notitie').value });
     const nieuw = [...behaald(await opslag.sessies())].filter((b) => !voor.has(b));
     if (nieuw.length) {
-      const namen = nieuw.map((id) => BADGES.find((x) => x.id === id)).map((b) => `${b.icoon} ${b.naam}`).join(', ');
-      setTimeout(() => melding(`🏆 Nieuwe prestatie${nieuw.length > 1 ? 's' : ''}: ${namen}!`, 7000), 1500);
+      const namen = nieuw.map((id) => BADGES.find((x) => x.id === id).naam).join(', ');
+      setTimeout(() => melding(`Nieuwe prestatie${nieuw.length > 1 ? 's' : ''}: ${namen}`, 7000), 1500);
     }
     if (S.verbonden) S.pauze = true; // niet meteen een nieuwe sessie beginnen
     else { await achtergrondStop(); laatSchermLos(); }
-    melding('Sessie bewaard in de historie 🔥');
+    melding('Sessie bewaard in de historie');
     alles();
   };
   d.returnValue = '';
@@ -371,7 +372,7 @@ async function toonInstellingen() {
   $('#inst-achtergrond').hidden = !isNative();
   if (isNative()) {
     const s = await achtergrondStatus();
-    $('#inst-accu').textContent = s ? (s.accuVrij ? 'uit ✓ (goed)' : 'aan – kan meten onderbreken') : 'onbekend';
+    $('#inst-accu').textContent = s ? (s.accuVrij ? 'uit (goed)' : 'aan – kan meten onderbreken') : 'onbekend';
     $('#inst-accu-knop').hidden = !!s?.accuVrij;
   }
 }
@@ -449,12 +450,28 @@ function sluitKeuken() {
   $('#keuken').hidden = true;
   if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
 }
+/** Decoratieve wijzerplaat op het startscherm. */
+function wijzerplaat() {
+  let s = '<circle cx="60" cy="60" r="54" fill="none" stroke="var(--lijn2)" stroke-width="1.5"/>';
+  for (let k = 0; k <= 30; k++) {
+    const h = ((135 + k * 9) * Math.PI) / 180, g = k % 5 === 0, r1 = g ? 38 : 42;
+    s += `<line x1="${60 + r1 * Math.cos(h)}" y1="${60 + r1 * Math.sin(h)}" x2="${60 + 47 * Math.cos(h)}" y2="${60 + 47 * Math.sin(h)}" stroke="${g ? 'var(--zacht)' : 'var(--lijn2)'}" stroke-width="${g ? 1.8 : 1.2}"/>`;
+  }
+  const n = ((135 + 21 * 9) * Math.PI) / 180;
+  s += `<path d="M${60 + 36 * Math.cos(n)} ${60 + 36 * Math.sin(n)} L${60 - 4 * Math.sin(n)} ${60 + 4 * Math.cos(n)} L${60 + 4 * Math.sin(n)} ${60 - 4 * Math.cos(n)}z" fill="var(--sintel)"/>`;
+  s += '<circle cx="60" cy="60" r="6" fill="var(--vlak3)" stroke="var(--sintel)" stroke-width="2"/>';
+  s += '<text x="60" y="92" text-anchor="middle" fill="var(--vaag)" font-family="Barlow Condensed" font-weight="600" font-size="9" letter-spacing="1.5">°C</text>';
+  return s;
+}
 async function kopieer(tekst) {
   try { await navigator.clipboard.writeText(tekst); melding('Gekopieerd'); } catch { melding('Kopiëren lukte niet; maak een schermafbeelding.'); }
 }
 
 // ---------- Start ----------
 async function start() {
+  // icoontjes in de HTML invullen
+  $$('[data-ic]').forEach((el) => { el.outerHTML = ic(el.dataset.ic); });
+  $('#verbind-wijzer').innerHTML = wijzerplaat();
   live.grafiek = new Grafiek($('#grafiek'), $('#grafiek-tip'));
   hist.grafiek = new Grafiek($('#det-grafiek'), $('#det-tip'));
   koppelKnoppen();

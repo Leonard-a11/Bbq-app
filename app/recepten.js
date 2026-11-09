@@ -4,14 +4,20 @@
 // `vlees` = snelkeuze uit kookboek.js (doel/rust), `opstelling` = BBQ-opstelling.
 
 export const CATEGORIEEN = [
-  { id: 'rund', naam: 'Rund', icoon: '🐂' },
-  { id: 'varken', naam: 'Varken', icoon: '🐖' },
-  { id: 'gevogelte', naam: 'Gevogelte', icoon: '🐓' },
-  { id: 'vis', naam: 'Vis', icoon: '🐟' },
-  { id: 'lam', naam: 'Lam', icoon: '🐑' },
-  { id: 'rub', naam: 'Rubs & sauzen', icoon: '🧂' },
-  { id: 'bij', naam: 'Bijgerechten', icoon: '🥗' },
+  { id: 'rund', naam: 'Rund' },
+  { id: 'varken', naam: 'Varken' },
+  { id: 'gevogelte', naam: 'Gevogelte' },
+  { id: 'vis', naam: 'Vis' },
+  { id: 'lam', naam: 'Lam' },
+  { id: 'wild', naam: 'Wild' },
+  { id: 'vega', naam: 'Vega' },
+  { id: 'rub', naam: 'Rubs & sauzen' },
+  { id: 'bij', naam: 'Bijgerechten' },
+  { id: 'dessert', naam: 'Desserts' },
 ];
+
+import { MEER } from './recepten-meer.js';
+export { leesIngredient, leesStap } from './receptnotatie.js';
 
 export const RECEPTEN = [
   {
@@ -378,6 +384,7 @@ export const RECEPTEN = [
     ],
     tips: [],
   },
+  ...MEER,
 ];
 
 /** Hoeveelheid netjes afronden na omrekenen (met ¼ ½ ¾). */

@@ -19,6 +19,19 @@ export const VLEES = [
   { id: 'kalkoen', uurPerKg: [0.5, 0.7], naam: 'Kalkoen (borst)', doel: 74, rust: 20 },
   { id: 'lam', uurPerKg: [0.9, 1.2], naam: 'Lamsbout (medium)', doel: 60, rust: 15 },
   { id: 'lamsrack', uren: [0.5, 0.8], naam: 'Lamsrack (rosé)', doel: 56, rust: 8 },
+  { id: 'tritip', uurPerKg: [0.9, 1.3], naam: 'Tri-tip (medium-rare)', doel: 54, rust: 10 },
+  { id: 'bavette', uren: [0.2, 0.4], naam: 'Bavette / flank steak', doel: 54, rust: 5 },
+  { id: 'chuck', uurPerKg: [1.5, 2.0], naam: 'Chuck roast (pulled beef)', doel: 95, rust: 30, stall: true },
+  { id: 'wangen', uren: [4, 6], naam: 'Wangen (rund of varken)', doel: 95, rust: 15 },
+  { id: 'gehakt', uurPerKg: [1.6, 2.2], naam: 'Gehakt (gehaktbrood, kofta)', doel: 71, rust: 10 },
+  { id: 'procureur', uurPerKg: [1.2, 1.6], naam: 'Procureur (varkensnek)', doel: 75, rust: 15 },
+  { id: 'buik', uurPerKg: [1.3, 1.8], naam: 'Varkensbuik / porchetta', doel: 80, rust: 15 },
+  { id: 'ham', uurPerKg: [0.5, 0.7], naam: 'Beenham (opwarmen)', doel: 55, rust: 10 },
+  { id: 'spek', uren: [2.5, 3.5], naam: 'Zelfgemaakt spek', doel: 66, rust: 0 },
+  { id: 'eend', uren: [0.4, 0.6], naam: 'Eendenborst (rosé)', doel: 57, rust: 5 },
+  { id: 'lamsschouder', uurPerKg: [2.0, 2.5], naam: 'Lamsschouder (pulled)', doel: 93, rust: 30, stall: true },
+  { id: 'hert', uren: [0.4, 0.7], naam: 'Hertenrug / -biefstuk', doel: 54, rust: 5 },
+  { id: 'vis', uren: [0.4, 0.8], naam: 'Vis heel of gerookt (makreel, forel, dorade)', doel: 60, rust: 2 },
   { id: 'zalm', uren: [0.4, 0.6], naam: 'Zalm', doel: 50, rust: 3 },
   { id: 'worst', uren: [0.3, 0.5], naam: 'Worst / braadworst', doel: 72, rust: 2 },
 ];
@@ -39,26 +52,26 @@ export const OPSTELLINGEN = [
 ];
 
 export const GEBEURTENISSEN = [
-  { type: 'deksel', label: 'Deksel open', icoon: '👀' },
-  { type: 'kolen', label: 'Kolen bijgevuld', icoon: '🔥' },
-  { type: 'hout', label: 'Rookhout erbij', icoon: '🪵' },
-  { type: 'ventiel', label: 'Ventiel versteld', icoon: '🎚️' },
-  { type: 'ingepakt', label: 'Ingepakt', icoon: '📦' },
-  { type: 'spritz', label: 'Gespritzt / gemopt', icoon: '💧' },
-  { type: 'omgedraaid', label: 'Omgedraaid', icoon: '🔄' },
-  { type: 'saus', label: 'Glazuur / saus', icoon: '🍯' },
-  { type: 'eraf', label: 'Van de BBQ', icoon: '🍽️' },
-  { type: 'notitie', label: 'Notitie', icoon: '📝' },
+  { type: 'deksel', label: 'Deksel open', icoon: 'oog' },
+  { type: 'kolen', label: 'Kolen bijgevuld', icoon: 'kolen' },
+  { type: 'hout', label: 'Rookhout erbij', icoon: 'hout' },
+  { type: 'ventiel', label: 'Ventiel versteld', icoon: 'ventiel' },
+  { type: 'ingepakt', label: 'Ingepakt', icoon: 'pakket' },
+  { type: 'spritz', label: 'Gespritzt / gemopt', icoon: 'druppel' },
+  { type: 'omgedraaid', label: 'Omgedraaid', icoon: 'draai' },
+  { type: 'saus', label: 'Glazuur / saus', icoon: 'kwast' },
+  { type: 'eraf', label: 'Van de BBQ', icoon: 'bord' },
+  { type: 'notitie', label: 'Notitie', icoon: 'pen' },
 ];
 export const AUTO_GEBEURTENISSEN = {
-  verbindingWeg: { label: 'Verbinding weg', icoon: '📴' },
-  verbindingTerug: { label: 'Verbinding terug', icoon: '📶' },
-  klaar: { label: 'Op temperatuur', icoon: '✅' },
-  stall: { label: 'Stall begonnen', icoon: '⏸️' },
-  dekselAuto: { label: 'Deksel open (gezien)', icoon: '👀' },
+  verbindingWeg: { label: 'Verbinding weg', icoon: 'btUit' },
+  verbindingTerug: { label: 'Verbinding terug', icoon: 'bt' },
+  klaar: { label: 'Op temperatuur', icoon: 'vinkRond' },
+  stall: { label: 'Stall begonnen', icoon: 'pauze' },
+  dekselAuto: { label: 'Deksel open (gezien)', icoon: 'oog' },
 };
 export function gebeurtenisInfo(type) {
-  return GEBEURTENISSEN.find((g) => g.type === type) || AUTO_GEBEURTENISSEN[type] || { label: type, icoon: '•' };
+  return GEBEURTENISSEN.find((g) => g.type === type) || AUTO_GEBEURTENISSEN[type] || { label: type, icoon: 'punt' };
 }
 
 export const TIMER_SNEL = [

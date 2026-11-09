@@ -91,7 +91,7 @@ public class MeetService extends Service {
                 PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         NotificationCompat.Builder b = new NotificationCompat.Builder(c, KANAAL)
                 .setSmallIcon(R.drawable.ic_stat_thermo)
-                .setColor(0xFFFF7A1A)
+                .setColor(0xFFE8642E)
                 .setContentTitle(titel)
                 .setContentText(tekst)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(tekst))

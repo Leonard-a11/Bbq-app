@@ -10,13 +10,14 @@ import { legenda } from './live.js';
 import { bewaarBestand, verkleinFoto } from './bestand.js';
 import { BADGES, behaald, samenvatting } from './prestaties.js';
 import { maakDeelkaart, deelAfbeelding } from './deelkaart.js';
+import { ic } from './iconen.js';
 
 export const hist = { grafiek: null, det: null, verborgen: new Set(), naarLive: () => {} };
 const fotoUrls = [];
 const kleur = (i) => KLEUREN[i % KLEUREN.length];
 const naamVan = (s, i) => s.voelers?.[i]?.naam || `Voeler ${i + 1}`;
 
-function sterren(n) { return '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n); }
+function sterren(n) { return '★'.repeat(n) + '<span style="color:var(--lijn2)">' + '★'.repeat(5 - n) + '</span>'; }
 
 export async function toonLijst() {
   $('#historie-detail').hidden = true;
@@ -25,7 +26,7 @@ export async function toonLijst() {
   fotoUrls.splice(0).forEach((u) => URL.revokeObjectURL(u));
   const sessies = (await opslag.sessies()).sort((a, b) => b.start - a.start);
   if (!sessies.length) {
-    lijst.innerHTML = '<div class="leeg"><div>🔥</div>Nog geen sessies.<br>Zodra je de thermometer verbindt, wordt alles automatisch bewaard.</div>';
+    lijst.innerHTML = '<div class="leeg">' + ic('vlam') + '<br>Nog geen sessies.<br>Zodra je de thermometer verbindt, wordt alles automatisch bewaard.</div>';
     return;
   }
   // samenvatting (voor prestaties) aanvullen bij oudere sessies
@@ -44,22 +45,22 @@ export async function toonLijst() {
       <div><b>${fmtDuur(langste).replace(' ', '')}</b><span>langste cook</span></div>
     </div>
     <div class="sectie-kop"><h3>Prestaties</h3><span class="klein grijs">${gehaald.size}/${BADGES.length}</span></div>
-    <div class="prestaties">${BADGES.map((b) => `<button class="badge${gehaald.has(b.id) ? ' aan' : ''}" data-b="${b.id}"><span>${b.icoon}</span>${esc(b.naam)}</button>`).join('')}</div>
+    <div class="prestaties">${BADGES.map((b) => `<button class="badge${gehaald.has(b.id) ? ' aan' : ''}" data-b="${b.id}"><span>${ic(b.icoon)}</span>${esc(b.naam)}</button>`).join('')}</div>
     <div class="sectie-kop"><h3>Sessies</h3></div>`;
   lijst.querySelectorAll('[data-b]').forEach((el) => {
     const b = BADGES.find((x) => x.id === el.dataset.b);
-    el.onclick = () => melding(`${b.icoon} ${b.naam}: ${b.uitleg}${gehaald.has(b.id) ? ' ✓' : ''}`);
+    el.onclick = () => melding(`${b.naam}: ${b.uitleg}${gehaald.has(b.id) ? ' (behaald)' : ''}`);
   });
   for (const s of sessies) {
     const b = document.createElement('button');
     b.className = 'sessie-item';
     const actief = S.sessie && S.sessie.id === s.id;
     b.innerHTML = `
-      <div class="si-foto">${s.demo ? '🧪' : '🔥'}</div>
+      <div class="si-foto">${ic(s.demo ? 'info' : 'vlam')}</div>
       <div class="si-midden">
         <div class="si-titel">${esc(s.naam)}</div>
         <div class="si-sub">${fmtDatum(s.start)} · ${fmtDuur(s.eind - s.start)}${actief ? ' · <span class="bezig-label">bezig</span>' : ''}</div>
-        ${s.beoordeling ? `<div class="si-sub" style="color:var(--vuur2)">${sterren(s.beoordeling)}</div>` : ''}
+        ${s.beoordeling ? `<div class="si-sterren">${sterren(s.beoordeling)}</div>` : ''}
       </div>
       <canvas></canvas>`;
     b.onclick = () => openSessie(s.id);
@@ -93,9 +94,9 @@ export async function openSessie(id) {
 
   const aantal = Math.max(0, ...metingen.map((m) => m.v.length));
   const voelers = Array.from({ length: aantal }, (_, i) => Object.assign({ naam: `Voeler ${i + 1}` }, d.voelers?.[i]));
-  let html = `<div class="stat">⏱ <b>${fmtDuur(d.eind - d.start)}</b></div><div class="stat">📈 <b>${metingen.length}</b> metingen</div>`;
+  let html = `<div class="stat">Duur <b>${fmtDuur(d.eind - d.start)}</b> · <b>${metingen.length}</b> metingen</div>`;
   const gaten = metingen.filter((m, k) => k && m.t - metingen[k - 1].t > 90e3).length;
-  if (gaten) html += `<div class="stat">📴 ${gaten}× verbinding weg</div>`;
+  if (gaten) html += `<div class="stat">${gaten}× verbinding weg geweest</div>`;
   voelers.forEach((v, i) => {
     const st = statistiek(metingen, i, isBbq(v) ? v : null);
     if (!st) return;
@@ -116,14 +117,14 @@ export async function openSessie(id) {
   teken();
   $('#det-tijdlijn').innerHTML = (d.gebeurtenissen || []).map((g) => {
     const info = gebeurtenisInfo(g.type);
-    return `<li><span class="tl-tijd">${fmtTijd(g.t)}</span><span class="tl-icoon">${info.icoon}</span><span class="tl-tekst">${esc(info.label)}${g.tekst ? ` <small>${esc(g.tekst)}</small>` : ''}</span></li>`;
+    return `<li><span class="tl-tijd">${fmtTijd(g.t)}</span><span class="tl-icoon">${ic(info.icoon)}</span><span class="tl-tekst">${esc(info.label)}${g.tekst ? ` <small>${esc(g.tekst)}</small>` : ''}</span></li>`;
   }).join('');
   $('#det-verder').hidden = S.sessie?.id === id;
   window.scrollTo(0, 0);
 }
 
 export function toonSterren(vak, n, kies) {
-  vak.innerHTML = [1, 2, 3, 4, 5].map((k) => `<button type="button" data-k="${k}" class="${k <= n ? 'aan' : ''}">★</button>`).join('');
+  vak.innerHTML = [1, 2, 3, 4, 5].map((k) => `<button type="button" data-k="${k}" class="${k <= n ? 'aan' : ''}">${ic('ster')}</button>`).join('');
   vak.querySelectorAll('button').forEach((b) => {
     b.onclick = () => { const k = +b.dataset.k; kies(k); toonSterren(vak, k, kies); };
   });

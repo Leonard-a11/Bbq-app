@@ -1,6 +1,7 @@
 // Kooktimers (spritzen, kolen checken, rusten…), ook met herhaling.
 // In de Android-app wordt de melding vooraf ingepland, zodat hij ook afgaat als de app slaapt.
 import { lees, bewaar, $, esc, fmtAftel, isNative } from './hulp.js';
+import { ic } from './iconen.js';
 import { geefAlarm, wisAlarm, toestelMelding, annuleerMelding } from './alarmen.js';
 
 let timers = lees('timers', []);
@@ -8,7 +9,7 @@ const opslaan = () => bewaar('timers', timers);
 let volgendId = Math.max(1000, ...timers.map((t) => t.id + 1));
 
 function plan(t) {
-  if (isNative()) toestelMelding(`⏱ ${t.label}`, t.herhaal ? `Elke ${Math.round(t.duur / 60e3)} min` : 'Timer afgelopen', { id: t.id, at: t.eind });
+  if (isNative()) toestelMelding(`Timer: ${t.label}`, t.herhaal ? `Elke ${Math.round(t.duur / 60e3)} min` : 'Timer afgelopen', { id: t.id, at: t.eind });
 }
 
 export function startTimer(label, minuten, herhaal = false) {
@@ -46,7 +47,7 @@ export function tik() {
   for (const t of timers) {
     if (t.af || nu < t.eind) continue;
     // in de app al ingepland als toestelmelding → hier geen tweede melding
-    geefAlarm('timer' + t.id, `⏱ ${t.label}`, t.herhaal ? 'Volgende ronde is gestart' : 'Timer afgelopen', { melden: !isNative() });
+    geefAlarm('timer' + t.id, `Timer: ${t.label}`, t.herhaal ? 'Volgende ronde is gestart' : 'Timer afgelopen', { melden: !isNative() });
     if (t.herhaal) {
       while (t.eind <= nu) t.eind += t.duur;
       plan(t);
@@ -71,7 +72,7 @@ export function toonTimers() {
         <div class="t-naam">${esc(t.label)}<small>${t.herhaal ? `elke ${Math.round(t.duur / 60e3)} min` : `${Math.round(t.duur / 60e3)} min`}</small></div>
         <div class="t-tijd"></div>
         <button data-plus="${t.id}">+5</button>
-        <button data-weg="${t.id}">✕</button>
+        <button data-weg="${t.id}">${ic('kruis')}</button>
         <div class="t-balk"></div>
       </div>`).join('');
     vak.querySelectorAll('[data-plus]').forEach((b) => { b.onclick = () => verleng(+b.dataset.plus, 5); });

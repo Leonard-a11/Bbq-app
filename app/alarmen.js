@@ -46,7 +46,7 @@ export async function vraagMeldingen() {
       if (r.display !== 'granted') await LocalNotifications.requestPermissions();
       kanaalKlaar ||= LocalNotifications.createChannel({
         id: 'alarm', name: 'Alarmen', description: 'Temperatuur bereikt, BBQ te koud/heet, timers',
-        importance: 5, visibility: 1, vibration: true, lights: true, lightColor: '#FF7A1A',
+        importance: 5, visibility: 1, vibration: true, lights: true, lightColor: '#E8642E',
       }).catch(() => {});
     } else if ('Notification' in window && Notification.permission === 'default') {
       await Notification.requestPermission();
@@ -62,7 +62,7 @@ export async function toestelMelding(titel, tekst, opties = {}) {
       await kanaalKlaar;
       await LocalNotifications.schedule({ notifications: [{
         id: opties.id ?? meldingId++, title: titel, body: tekst, channelId: 'alarm',
-        smallIcon: 'ic_stat_thermo', iconColor: '#FF7A1A',
+        smallIcon: 'ic_stat_thermo', iconColor: '#E8642E',
         ...(opties.at ? { schedule: { at: new Date(opties.at), allowWhileIdle: true } } : {}),
       }] });
     } else if (!opties.at && 'Notification' in window && Notification.permission === 'granted') {

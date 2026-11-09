@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>BBQ Thermometer</title>
-  <meta name="theme-color" content="#0e0f12">
+  <meta name="theme-color" content="#121110">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icoon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icoon-192.png">
@@ -13,7 +13,7 @@
 <body>
   <header class="kop">
     <div class="merk">
-      <svg viewBox="0 0 24 24" class="vlam" aria-hidden="true"><path d="M12 2c1 3.5-1.5 5-1.5 7.5 0 1.4 1 2.5 2.3 2.5 1.5 0 2.2-1.2 2.2-2.6 0-.6-.1-1.2-.3-1.7C17.4 9.4 19 12 19 14.6 19 18.7 15.9 22 12 22s-7-3.3-7-7.4C5 9.3 10.2 6.7 12 2z"/></svg>
+      <i data-ic="vlam"></i>
       <span>BBQ Thermometer</span>
     </div>
     <div class="kop-rechts">
@@ -26,14 +26,13 @@
     <!-- ================= LIVE ================= -->
     <section id="tab-live" class="tab-paneel">
       <div id="alarm" class="alarm" hidden>
-        <div class="alarm-bel">🔔</div>
+        <div class="alarm-bel"><i data-ic="bel"></i></div>
         <div id="alarm-tekst" class="alarm-tekst"></div>
         <button id="alarm-stop" class="alarm-knop">Stop</button>
       </div>
 
       <div id="verbind-kaart" class="kaart verbind">
-        <div class="verbind-gloed"></div>
-        <svg viewBox="0 0 24 24" class="verbind-vlam" aria-hidden="true"><path d="M12 2c1 3.5-1.5 5-1.5 7.5 0 1.4 1 2.5 2.3 2.5 1.5 0 2.2-1.2 2.2-2.6 0-.6-.1-1.2-.3-1.7C17.4 9.4 19 12 19 14.6 19 18.7 15.9 22 12 22s-7-3.3-7-7.4C5 9.3 10.2 6.7 12 2z"/></svg>
+        <svg class="verbind-wijzer" viewBox="0 0 120 120" aria-hidden="true" id="verbind-wijzer"></svg>
         <h2 id="verbind-titel">Klaar om te stoken?</h2>
         <p id="verbind-tekst">Zet de thermometer aan en verbind. Alles wordt automatisch bewaard, ook als de verbinding even wegvalt.</p>
         <button id="verbind" class="knop knop-groot">Verbind thermometer</button>
@@ -51,7 +50,7 @@
       </div>
 
       <div id="pauze" class="kaart pauze" hidden>
-        <div><b>Sessie bewaard ✓</b><span class="klein grijs">De temperaturen zie je nog, maar worden niet opgeslagen tot je een nieuwe sessie start.</span></div>
+        <div><b>Sessie bewaard</b><span class="klein grijs">De temperaturen zie je nog, maar worden niet opgeslagen tot je een nieuwe sessie start.</span></div>
         <button id="nieuwe-sessie" class="knop">Nieuwe sessie</button>
       </div>
 
@@ -60,7 +59,7 @@
           <button id="sessie-naam" class="sessie-naam" title="Sessie instellen"></button>
           <div class="sessie-rechts">
             <div id="sessie-klok" class="sessie-klok">0:00:00</div>
-            <button id="keuken-knop" class="keuken-knop" title="Keukenmodus: grote cijfers">⛶</button>
+            <button id="keuken-knop" class="keuken-knop" title="Keukenmodus: grote cijfers"><i data-ic="scherm"></i></button>
           </div>
         </div>
         <div id="sessie-chips" class="chips"></div>
@@ -73,9 +72,9 @@
       <div id="los-voelers" class="los-voelers"></div>
 
       <div id="acties" class="acties" hidden>
-        <button id="knop-gebeurtenis" class="actie"><span>＋</span>Gebeurtenis</button>
-        <button id="knop-timer" class="actie"><span>⏱</span>Timer</button>
-        <button id="knop-sessie" class="actie"><span>⚙</span>Sessie</button>
+        <button id="knop-gebeurtenis" class="actie"><i data-ic="plus"></i>Gebeurtenis</button>
+        <button id="knop-timer" class="actie"><i data-ic="timer"></i>Timer</button>
+        <button id="knop-sessie" class="actie"><i data-ic="schuif"></i>Sessie</button>
       </div>
 
       <div id="timers" class="timers"></div>
@@ -110,15 +109,15 @@
     <!-- ================= RECEPTEN ================= -->
     <section id="tab-recepten" class="tab-paneel" hidden>
       <div class="segment breed" id="rc-modus">
-        <button type="button" data-m="recepten" class="actief">📖 Recepten</button>
-        <button type="button" data-m="planner">🧮 Planner</button>
-        <button type="button" data-m="gidsen">💡 Gidsen</button>
+        <button type="button" data-m="recepten" class="actief">Recepten</button>
+        <button type="button" data-m="planner">Planner</button>
+        <button type="button" data-m="gidsen">Gidsen</button>
       </div>
       <div id="rc-recepten">
-        <input id="rc-zoek" type="search" class="zoek" placeholder="Zoek op recept of ingrediënt…">
-        <div id="rc-cats" class="chips knoppen scroll"></div>
-        <div id="rc-lijst" class="recept-grid"></div>
-        <div class="midden"><button id="rc-nieuw" class="knop knop-licht">＋ Eigen recept</button></div>
+        <div class="zoek-veld"><i data-ic="zoek"></i><input id="rc-zoek" type="search" placeholder="Zoek op recept of ingrediënt…"></div>
+        <div id="rc-cats" class="cats"></div>
+        <ol id="rc-lijst" class="menukaart"></ol>
+        <div class="midden"><button id="rc-nieuw" class="knop knop-licht"><i data-ic="plus"></i>Eigen recept</button></div>
       </div>
       <div id="rc-detail" hidden></div>
       <div id="rc-planner" hidden></div>
@@ -146,9 +145,9 @@
             <textarea id="det-notitie" rows="3" placeholder="Gewicht, hout, rub, wat ging goed…"></textarea>
           </label>
           <div class="rij-knoppen links">
-            <label class="knop knop-licht">📷 Foto<input type="file" accept="image/*" id="det-foto-kies" hidden></label>
-            <button id="det-verder" class="knop knop-licht">▶ Verder met deze sessie</button>
-            <button id="det-deel" class="knop">📸 Deel</button>
+            <label class="knop knop-licht"><i data-ic="camera"></i>Foto<input type="file" accept="image/*" id="det-foto-kies" hidden></label>
+            <button id="det-verder" class="knop knop-licht">Verder met deze sessie</button>
+            <button id="det-deel" class="knop"><i data-ic="deel"></i>Deel</button>
             <button id="det-csv" class="knop knop-licht">Excel (CSV)</button>
             <button id="det-wis" class="knop knop-gevaar">Verwijder</button>
           </div>
@@ -165,7 +164,7 @@
         </div>
         <label class="inst-rij"><span>Alarmgeluid in de app</span><input type="checkbox" id="inst-geluid" class="schakel"></label>
         <label class="inst-rij"><span>Trillen bij alarm</span><input type="checkbox" id="inst-trillen" class="schakel"></label>
-        <label class="inst-rij"><span>Gesproken meldingen 🗣️</span><input type="checkbox" id="inst-spraak" class="schakel"></label>
+        <label class="inst-rij"><span>Gesproken meldingen</span><input type="checkbox" id="inst-spraak" class="schakel"></label>
       </div>
 
       <div class="kaart instellingen" id="inst-achtergrond" hidden>
@@ -207,23 +206,19 @@
   </main>
 
   <nav class="onder">
-    <button class="tab actief" data-tab="live">
-      <svg viewBox="0 0 24 24"><path d="M12 2c1 3.5-1.5 5-1.5 7.5 0 1.4 1 2.5 2.3 2.5 1.5 0 2.2-1.2 2.2-2.6 0-.6-.1-1.2-.3-1.7C17.4 9.4 19 12 19 14.6 19 18.7 15.9 22 12 22s-7-3.3-7-7.4C5 9.3 10.2 6.7 12 2z"/></svg>Live</button>
-    <button class="tab" data-tab="recepten">
-      <svg viewBox="0 0 24 24" class="lijn"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 21V5M8 7h7M8 11h5"/></svg>Recepten</button>
-    <button class="tab" data-tab="historie">
-      <svg viewBox="0 0 24 24" class="lijn"><path d="M4 19h16M6 15l4-5 3 3 5-7"/></svg>Historie</button>
-    <button class="tab" data-tab="instellingen">
-      <svg viewBox="0 0 24 24" class="lijn"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>Instellingen</button>
+    <button class="tab actief" data-tab="live"><i data-ic="vlam"></i>Live</button>
+    <button class="tab" data-tab="recepten"><i data-ic="boek"></i>Recepten</button>
+    <button class="tab" data-tab="historie"><i data-ic="grafiek"></i>Historie</button>
+    <button class="tab" data-tab="instellingen"><i data-ic="schuif"></i>Instellingen</button>
   </nav>
 
   <!-- ================= DIALOGEN ================= -->
   <dialog id="dlg-voeler" class="blad">
     <form method="dialog">
       <h2 id="dv-titel">Voeler</h2>
-      <div class="segment breed" id="dv-rol">
-        <button type="button" data-rol="vlees">🥩 Vlees</button>
-        <button type="button" data-rol="bbq">🔥 BBQ-temperatuur</button>
+      <div class="keuze" id="dv-rol">
+        <button type="button" data-rol="vlees"><i data-ic="vork"></i>Vlees</button>
+        <button type="button" data-rol="bbq"><i data-ic="vlam"></i>BBQ</button>
       </div>
       <label class="veld">Naam<input id="dv-naam" placeholder="bijv. Brisket"></label>
       <label class="veld">Snel kiezen<select id="dv-preset"></select></label>
@@ -275,7 +270,7 @@
       <label class="veld">Naam<input id="dt-naam" value="Timer"></label>
       <div class="twee">
         <label class="veld">Minuten<input id="dt-min" type="number" inputmode="numeric" min="1" value="10"></label>
-        <label class="veld vink"><input type="checkbox" id="dt-herhaal"> Herhalen</label>
+        <label class="veld vink-veld"><input type="checkbox" id="dt-herhaal"> Herhalen</label>
       </div>
       <div class="rij-knoppen">
         <button value="annuleer" class="knop knop-licht">Annuleer</button>
@@ -290,7 +285,7 @@
       <div id="da-stats" class="stats"></div>
       <div class="veld">Hoe was het?<div id="da-sterren" class="sterren groot"></div></div>
       <label class="veld">Notitie<textarea id="da-notitie" rows="3" placeholder="Wat ging goed, wat volgende keer anders?"></textarea></label>
-      <label class="knop knop-licht">📷 Foto toevoegen<input type="file" accept="image/*" id="da-foto" hidden></label>
+      <label class="knop knop-licht"><i data-ic="camera"></i>Foto toevoegen<input type="file" accept="image/*" id="da-foto" hidden></label>
       <img id="da-foto-voorbeeld" class="det-foto" alt="" hidden>
       <div class="rij-knoppen">
         <button value="annuleer" class="knop knop-licht">Nog niet</button>
@@ -312,10 +307,7 @@
   <dialog id="dlg-recept" class="blad">
     <form method="dialog">
       <h2 id="dr-titel">Eigen recept</h2>
-      <div class="twee drie-een">
-        <label class="veld">Naam<input id="dr-naam" placeholder="bijv. Opa's ribs"></label>
-        <label class="veld">Icoon<input id="dr-emoji" maxlength="4"></label>
-      </div>
+      <label class="veld">Naam<input id="dr-naam" placeholder="bijv. Opa's ribs"></label>
       <div class="twee">
         <label class="veld">Soort<select id="dr-cat"></select></label>
         <label class="veld">Personen<input id="dr-personen" type="number" min="1" inputmode="numeric"></label>
@@ -338,7 +330,7 @@
   </dialog>
 
   <div id="keuken" class="keuken" hidden>
-    <div class="k-kop"><span id="k-klok" class="k-klok"></span><span id="k-naam" class="k-sessie"></span><button id="k-sluit" class="k-sluit">✕</button></div>
+    <div class="k-kop"><span id="k-klok" class="k-klok"></span><span id="k-naam" class="k-sessie"></span><button id="k-sluit" class="k-sluit"><i data-ic="kruis"></i></button></div>
     <div id="k-voelers" class="k-voelers"></div>
   </div>
 

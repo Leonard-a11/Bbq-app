@@ -1,7 +1,7 @@
 // Gedeelde toestand van de app en instellingen per voeler.
 import { lees, bewaar } from './hulp.js';
 
-export const KLEUREN = ['#ff7a1a', '#3ec3ff', '#46d37f', '#c58cff', '#ffd23f', '#ff5c8a'];
+export const KLEUREN = ['#e8642e', '#6fa8c7', '#93b56f', '#b994c9', '#dcae4a', '#d8798b'];
 
 export const inst = Object.assign({ eenheid: lees('eenheid', 'C'), geluid: true, trillen: true, spraak: true }, lees('instellingen', {}));
 export function bewaarInst() { bewaar('instellingen', inst); }

@@ -3,7 +3,7 @@
   "appName": "BBQ Thermometer",
   "webDir": "public",
   "android": {
-    "backgroundColor": "#16181d"
+    "backgroundColor": "#121110"
   },
   "plugins": {
     "BluetoothLe": {
@@ -15,7 +15,7 @@
       }
     },
     "LocalNotifications": {
-      "iconColor": "#ff7a1a"
+      "iconColor": "#e8642e"
     },
     "SystemBars": {
       "style": "DARK",
