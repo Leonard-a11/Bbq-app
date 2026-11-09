@@ -238,6 +238,18 @@ async function verbind(alles = false) {
   ontgrendelGeluid();
   vraagMeldingen();
   $('#diagnose').hidden = true;
+  log(alles ? 'Zoeken naar álle apparaten…' : 'Thermometer zoeken…');
+  // Android-app: eerst rechtstreeks naar thermometers die de telefoon al kent (zonder zoeken)
+  if (!alles && navigator.bluetooth.bekende) {
+    let kandidaten = [];
+    try { kandidaten = await navigator.bluetooth.bekende(); } catch (e) { log('Bekende apparaten opvragen: FOUT ' + e.message); }
+    log(kandidaten.length
+      ? 'Bekende apparaten: ' + kandidaten.map((k) => `"${k.name || '?'}" ${k.id} (${k.bron})`).join(', ')
+      : 'Geen bekende thermometer op deze telefoon; nu zoeken');
+    for (const k of kandidaten) {
+      if (await probeer(navigator.bluetooth.apparaat(k.id, k.name), false)) return;
+    }
+  }
   let dev;
   try {
     dev = await navigator.bluetooth.requestDevice(alles
@@ -248,6 +260,7 @@ async function verbind(alles = false) {
         optionalServices: [SERVICE, ...ANDERE_DIENSTEN],
       });
   } catch (e) {
+    log(`Zoeken: ${e.name}: ${e.message}`);
     if (/cancel/i.test(e.message)) return; // gebruiker sloot de lijst
     if (/adapter|not available|unavailable/i.test(e.message)) {
       melding('Bluetooth staat uit, of Chrome mag het niet gebruiken. Zie "Lukt het niet?".', 7000);
@@ -258,22 +271,52 @@ async function verbind(alles = false) {
     }
     return;
   }
+  log(`Gekozen: "${dev.name || '(geen naam)'}"`);
+  await probeer(dev, true);
+}
+
+// Verbinden met één apparaat; true = gelukt.
+async function probeer(dev, meldFout) {
   stopDemo();
   S.apparaat = dev;
   S.handmatigLos = false;
-  dev.addEventListener('gattserverdisconnected', bijVerbroken);
+  if (!dev.__luistert) {
+    dev.__luistert = true;
+    dev.addEventListener('gattserverdisconnected', () => { if (S.apparaat === dev) bijVerbroken(); });
+  }
   try {
     await koppel(dev);
+    navigator.bluetooth.onthoud?.(dev);
+    return true;
   } catch (e) {
     console.error(e);
     log('Mislukt: ' + e.message);
-    melding(/ander protocol/.test(e.message)
-      ? 'Verbonden, maar dit model praat anders. Zie de gegevens hieronder.'
-      : 'Verbinden mislukt: ' + e.message + '. Probeer het nog eens.', 7000);
+    if (meldFout) {
+      melding(/ander protocol/.test(e.message)
+        ? 'Verbonden, maar dit model praat anders. Zie de gegevens hieronder.'
+        : 'Verbinden mislukt: ' + e.message + '. Probeer het nog eens.', 7000);
+    }
     S.handmatigLos = true;
     S.apparaat = null;
     try { dev.gatt.disconnect(); } catch { /* al los */ }
     toonStatus('Niet verbonden');
+    return false;
+  }
+}
+
+// Android-app: 10 s luisteren en alles opschrijven wat de telefoon hoort.
+async function zoektest() {
+  log('Zoektest 10 s: alles wat de telefoon hoort…');
+  const gezien = new Set();
+  try {
+    await navigator.bluetooth.zoektest(10000, (r) => {
+      if (gezien.has(r.id)) return;
+      gezien.add(r.id);
+      log(`  "${r.name || '(geen naam)'}" ${r.id} sterkte ${r.rssi ?? '?'}${r.uuids?.length ? ' diensten ' + r.uuids.map(kort).join(',') : ''}${r.fabrikant ? ' fabrikant ' + r.fabrikant : ''}`);
+    });
+    log(`Zoektest klaar: ${gezien.size} apparaten gehoord`);
+  } catch (e) {
+    log(`Zoektest: FOUT ${e.name}: ${e.message}`);
   }
 }
 
@@ -887,6 +930,9 @@ function start() {
   document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => kiesTab(t.dataset.tab)));
   $('#verbind').addEventListener('click', () => verbind(false));
   $('#verbind-alles').addEventListener('click', () => verbind(true));
+  if (navigator.bluetooth?.zoektest) $('#zoektest').hidden = false;
+  $('#zoektest').addEventListener('click', zoektest);
+  log(window.__native ? 'Android-app gestart' : 'Webversie gestart');
   $('#log-kopieer').addEventListener('click', async () => {
     try { await navigator.clipboard.writeText(S.log.join('\n')); melding('Log gekopieerd'); }
     catch { melding('Kopiëren lukte niet; maak een schermafbeelding.'); }
@@ -895,7 +941,9 @@ function start() {
     try { await navigator.clipboard.writeText($('#diagnose-tekst').textContent); melding('Gekopieerd'); }
     catch { melding('Kopiëren lukte niet; maak een schermafbeelding.'); }
   });
-  navigator.bluetooth?.getAvailability?.().then((ok) => { $('#bt-uit').hidden = ok; }).catch(() => {});
+  navigator.bluetooth?.getAvailability?.()
+    .then((ok) => { $('#bt-uit').hidden = ok; log('Bluetooth ' + (ok ? 'staat aan' : 'staat UIT')); })
+    .catch((e) => log(`Bluetooth opstarten: FOUT ${e.name}: ${e.message}`));
   $('#demo').addEventListener('click', startDemo);
   $('#verbreek').addEventListener('click', verbreek);
   $('#alarm-stop').addEventListener('click', stopAlarm);

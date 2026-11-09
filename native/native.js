@@ -95,6 +95,37 @@ if (Capacitor.isNativePlatform()) {
       }
     },
   };
+  const IBBQ = numberToUUID(0xfff0);
+  const lijktThermometer = (naam) => /ibbq|ibt|inkbird/i.test(naam || '');
+  // Thermometers die de telefoon al kent: eerder gebruikt, nu verbonden (bijv. via BBQ Go)
+  // of gekoppeld in de Bluetooth-instellingen. Daarmee kan zonder zoeken verbonden worden.
+  bluetooth.bekende = async () => {
+    await init();
+    const lijst = [];
+    const voegToe = (d, bron) => { if (d && !lijst.some((x) => x.id === d.deviceId)) lijst.push({ id: d.deviceId, name: d.name, bron }); };
+    try { const v = JSON.parse(localStorage.getItem('bbqApparaat') || 'null'); if (v) voegToe(v, 'eerder gebruikt'); } catch { /* niets */ }
+    try { (await BleClient.getConnectedDevices([IBBQ])).forEach((d) => voegToe(d, 'nu verbonden')); } catch { /* niet ondersteund */ }
+    try { (await BleClient.getConnectedDevices([])).filter((d) => lijktThermometer(d.name)).forEach((d) => voegToe(d, 'nu verbonden')); } catch { /* niets */ }
+    try { (await BleClient.getBondedDevices()).filter((d) => lijktThermometer(d.name)).forEach((d) => voegToe(d, 'gekoppeld')); } catch { /* niets */ }
+    return lijst;
+  };
+  bluetooth.apparaat = (id, name) => new Apparaat({ deviceId: id, name });
+  bluetooth.onthoud = (a) => {
+    try { localStorage.setItem('bbqApparaat', JSON.stringify({ deviceId: a.id, name: a.name })); } catch { /* geen opslag */ }
+  };
+  bluetooth.zoektest = async (ms, terug) => {
+    await init();
+    if (!(await BleClient.isEnabled())) throw fout('NotFoundError', 'Bluetooth staat uit');
+    await BleClient.requestLEScan({ allowDuplicates: false }, (r) => terug({
+      id: r.device.deviceId,
+      name: r.localName || r.device.name,
+      rssi: r.rssi,
+      uuids: r.uuids,
+      fabrikant: r.manufacturerData ? Object.keys(r.manufacturerData).join(',') : '',
+    }));
+    await new Promise((ok) => setTimeout(ok, ms));
+    await BleClient.stopLEScan();
+  };
   Object.defineProperty(navigator, 'bluetooth', { value: bluetooth, configurable: true });
 
   // Scherm aan houden
