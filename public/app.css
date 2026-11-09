@@ -69,7 +69,8 @@ main { padding: 12px 16px 32px; max-width: 900px; margin: 0 auto; }
 .hulp ol { padding-left: 20px; margin: 10px 0 0; }
 .hulp li { margin-bottom: 6px; }
 .hulp b { color: var(--tekst); }
-#diagnose pre {
+.log summary { cursor: pointer; color: var(--grijs); font-size: 14px; }
+.log pre, #diagnose pre {
   background: var(--kaart2); border-radius: 10px; padding: 10px; font-size: 12px;
   white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow: auto;
 }

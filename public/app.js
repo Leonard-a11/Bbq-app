@@ -59,6 +59,9 @@ const S = {
   alarmStaat: {},       // per voeler: 'hoog' | 'laag' | null
   alarmGezien: {},
   geluid: null,
+  log: [],
+  koppelNr: 0,
+  laatsteData: 0,
   wakeLock: null,
 };
 
@@ -263,6 +266,7 @@ async function verbind(alles = false) {
     await koppel(dev);
   } catch (e) {
     console.error(e);
+    log('Mislukt: ' + e.message);
     melding(/ander protocol/.test(e.message)
       ? 'Verbonden, maar dit model praat anders. Zie de gegevens hieronder.'
       : 'Verbinden mislukt: ' + e.message + '. Probeer het nog eens.', 7000);
@@ -275,26 +279,38 @@ async function verbind(alles = false) {
 
 async function koppel(dev) {
   toonStatus('Verbinden…');
+  const nr = ++S.koppelNr;
+  log(`Verbinden met "${dev.name || '(geen naam)'}"…`);
   const server = await dev.gatt.connect();
+  log('Bluetooth-verbinding staat');
   let svc;
   try {
     svc = await server.getPrimaryService(SERVICE);
   } catch (e) {
+    log('Dienst FFF0 niet gevonden: ' + e.message);
     await toonDiagnose(dev, server);
     throw new Error('dit model gebruikt een ander protocol');
   }
   const [res, login, live, inst] = await Promise.all(
     [CH_RESULTAAT, CH_LOGIN, CH_LIVE, CH_INSTELLING].map((u) => svc.getCharacteristic(u)));
   S.kanalen = { res, login, live, inst };
+  log('Kanalen: ' + [res, login, live, inst].map((c) => `${kort(c.uuid)}[${eigenschappen(c)}]`).join(' '));
   // eigenschappen i.p.v. addEventListener: bij opnieuw verbinden geen dubbele luisteraars
-  res.oncharacteristicvaluechanged = (e) => leesBatterij(e.target.value);
-  live.oncharacteristicvaluechanged = (e) => nieuweTemps(leesTemps(e.target.value));
-  await schrijf(login, CMD.login);
-  await res.startNotifications();
-  await live.startNotifications();
-  await schrijf(inst, CMD.celsius);
-  await schrijf(inst, CMD.live);
-  await schrijf(inst, CMD.batterij).catch(() => {});
+  res.oncharacteristicvaluechanged = (e) => {
+    log('Antwoord FFF1: ' + hex(e.target.value));
+    leesBatterij(e.target.value);
+  };
+  S.laatsteData = 0;
+  live.oncharacteristicvaluechanged = (e) => {
+    if (!S.laatsteData) log('Eerste meting FFF4: ' + hex(e.target.value));
+    S.laatsteData = Date.now();
+    nieuweTemps(leesTemps(e.target.value));
+  };
+  // eerst meldingen aanzetten, dan pas inloggen: dan missen we geen antwoord
+  await stap('meldingen FFF1 aan', () => res.startNotifications());
+  if (!await stap('meldingen FFF4 aan', () => live.startNotifications())) throw new Error('metingen aanzetten lukte niet');
+  await handdruk(login, inst, false);
+  wachtOpMetingen(nr, login, inst);
   clearInterval(S.batterijTimer);
   S.batterijTimer = setInterval(() => {
     if (S.verbonden) schrijf(inst, CMD.batterij).catch(() => {});
@@ -306,11 +322,58 @@ async function koppel(dev) {
   toonVerbinden();
 }
 
+// Inloggen + metingen aanzetten. "anders" = de andere schrijfwijze (met/zonder bevestiging);
+// sommige uitvoeringen negeren de ene en reageren alleen op de andere.
+async function handdruk(login, inst, anders) {
+  const w = anders ? schrijfAnders : schrijf;
+  await stap('inloggen', () => w(login, CMD.login));
+  await wacht(300);
+  await stap('°C instellen', () => w(inst, CMD.celsius));
+  await stap('live metingen aan', () => w(inst, CMD.live));
+  await stap('batterij opvragen', () => w(inst, CMD.batterij));
+}
+function schrijfAnders(ch, bytes) {
+  const data = new Uint8Array(bytes);
+  const metBevestiging = ch.properties && ch.properties.write && ch.writeValueWithResponse;
+  if (metBevestiging && ch.writeValueWithoutResponse) return ch.writeValueWithoutResponse(data);
+  if (ch.writeValueWithResponse) return ch.writeValueWithResponse(data);
+  return ch.writeValue(data);
+}
+// Komen er na het verbinden geen metingen binnen, dan nog een paar keer proberen.
+async function wachtOpMetingen(nr, login, inst) {
+  const pogingen = [
+    ['nog geen metingen na 4 s → opnieuw, andere schrijfwijze', () => handdruk(login, inst, true)],
+    ['nog geen metingen na 8 s → opnieuw, gewone schrijfwijze', () => handdruk(login, inst, false)],
+  ];
+  for (const [tekst, fn] of pogingen) {
+    await wacht(4000);
+    if (nr !== S.koppelNr || !S.verbonden || S.laatsteData) return;
+    log(tekst);
+    await fn();
+  }
+  await wacht(4000);
+  if (nr !== S.koppelNr || !S.verbonden || S.laatsteData) return;
+  log('Geen metingen ontvangen. Kopieer dit log en stuur het door.');
+  toonStatus('Geen metingen');
+  $('#log-vak').open = true;
+  melding('Verbonden, maar de thermometer stuurt geen metingen. Zie "Verbindingslog" onderaan.', 8000);
+}
+async function stap(naam, fn) {
+  try { await fn(); log(naam + ': ok'); return true; } catch (e) { log(`${naam}: FOUT ${e.name}: ${e.message}`); return false; }
+}
+function log(tekst) {
+  S.log.push(`${new Date().toLocaleTimeString('nl-NL')} ${tekst}`);
+  if (S.log.length > 300) S.log.shift();
+  $('#log-tekst').textContent = S.log.join('\n');
+}
+const hex = (dv) => [...new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength)].map((b) => b.toString(16).padStart(2, '0')).join(' ');
+const kort = (uuid) => (/^0000(....)-0000-1000-8000-00805f9b34fb$/.exec(String(uuid))?.[1] || String(uuid)).toUpperCase();
+const eigenschappen = (c) => ['read', 'write', 'writeWithoutResponse', 'notify', 'indicate'].filter((k) => c.properties[k]).join(',');
+
 // Laat zien wat het apparaat aanbiedt, zodat de app op een ander model kan worden aangepast.
 async function toonDiagnose(dev, server) {
   const r = [`Naam: ${dev.name || '(geen naam)'}`, `Browser: ${navigator.userAgent}`];
   const tekst = (dv) => new TextDecoder().decode(dv).replace(/\0+$/, '');
-  const hex = (dv) => [...new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength)].map((b) => b.toString(16).padStart(2, '0')).join(' ');
   let diensten = [];
   try { diensten = await server.getPrimaryServices(); } catch (e) { r.push('Diensten: ' + e.message); }
   if (!diensten.length) r.push('Geen bekende diensten gevonden.');
@@ -319,7 +382,7 @@ async function toonDiagnose(dev, server) {
     let kenmerken = [];
     try { kenmerken = await d.getCharacteristics(); } catch (e) { r.push('  ' + e.message); }
     for (const c of kenmerken) {
-      const props = ['read', 'write', 'writeWithoutResponse', 'notify', 'indicate'].filter((k) => c.properties[k]);
+      const props = eigenschappen(c).split(',');
       let waarde = '';
       if (c.properties.read) {
         try {
@@ -336,6 +399,7 @@ async function toonDiagnose(dev, server) {
 }
 
 async function bijVerbroken() {
+  log('Verbinding verbroken');
   S.verbonden = false;
   clearInterval(S.batterijTimer);
   toonStatus();
@@ -822,6 +886,10 @@ function start() {
   document.querySelectorAll('.tab').forEach((t) => t.addEventListener('click', () => kiesTab(t.dataset.tab)));
   $('#verbind').addEventListener('click', () => verbind(false));
   $('#verbind-alles').addEventListener('click', () => verbind(true));
+  $('#log-kopieer').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(S.log.join('\n')); melding('Log gekopieerd'); }
+    catch { melding('Kopiëren lukte niet; maak een schermafbeelding.'); }
+  });
   $('#diagnose-kopieer').addEventListener('click', async () => {
     try { await navigator.clipboard.writeText($('#diagnose-tekst').textContent); melding('Gekopieerd'); }
     catch { melding('Kopiëren lukte niet; maak een schermafbeelding.'); }

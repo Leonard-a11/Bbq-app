@@ -1,6 +1,6 @@
 // Bewaart de app op de telefoon, zodat hij ook zonder internet opent.
 // Bij een nieuwe versie: VERSIE ophogen.
-const VERSIE = 'bbq-v2';
+const VERSIE = 'bbq-v3';
 const BESTANDEN = ['./', 'index.html', 'app.js', 'app.css', 'manifest.webmanifest', 'icoon.svg', 'icoon-192.png', 'icoon-512.png'];
 
 self.addEventListener('install', (e) => {
