@@ -489,6 +489,7 @@ function geefAlarm(titel, tekst) {
   if (navigator.vibrate) navigator.vibrate([400, 200, 400, 200, 400]);
   if ('Notification' in window && Notification.permission === 'granted') {
     const opties = { body: tekst, tag: 'bbq-alarm', renotify: true, icon: 'icoon-192.png', vibrate: [400, 200, 400] };
+    if (window.__native) { new Notification(titel, opties); return; } // Android-app
     navigator.serviceWorker?.ready
       .then((r) => r.showNotification(titel, opties))
       .catch(() => { try { new Notification(titel, opties); } catch { /* niet mogelijk */ } });
@@ -928,7 +929,7 @@ function start() {
 
   toonStatus(); toonVerbinden();
   herstelSessie().catch(console.error);
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  if ('serviceWorker' in navigator && !window.__native) navigator.serviceWorker.register('sw.js').catch(() => {});
   if (new URLSearchParams(location.search).has('demo')) startDemo();
 }
 start();

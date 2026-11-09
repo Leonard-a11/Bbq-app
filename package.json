@@ -1,0 +1,21 @@
+{
+  "name": "bbq-thermometer",
+  "private": true,
+  "version": "1.0.0",
+  "description": "App voor Inkbird BBQ-thermometers (iBBQ) met historie",
+  "scripts": {
+    "bouw": "esbuild native/native.js --bundle --minify --format=iife --target=es2020 --outfile=public/native.js",
+    "android": "npm run bouw && cap sync android"
+  },
+  "dependencies": {
+    "@capacitor-community/bluetooth-le": "8.3.0",
+    "@capacitor-community/keep-awake": "8.0.1",
+    "@capacitor/android": "8.6.0",
+    "@capacitor/core": "8.6.0",
+    "@capacitor/local-notifications": "8.3.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.0",
+    "esbuild": "0.28.2"
+  }
+}

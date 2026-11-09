@@ -1,0 +1,35 @@
+# Bouwt de Android-app (.apk) bij elke push naar main en zet hem bij "Releases".
+# Op de telefoon: github.com/Leonard-a11/Bbq-app/releases/latest → BBQ-Thermometer.apk
+name: Android-app bouwen
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm run android
+      - name: apk bouwen
+        working-directory: android
+        run: chmod +x gradlew && ./gradlew assembleRelease --no-daemon
+      - run: cp android/app/build/outputs/apk/release/app-release.apk BBQ-Thermometer.apk
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: BBQ Thermometer 1.0.${{ github.run_number }}
+          body: Download BBQ-Thermometer.apk hieronder en open het bestand op je Android-telefoon.
+          files: BBQ-Thermometer.apk
+          make_latest: true

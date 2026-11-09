@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BBQ Thermometer</string>
+    <string name="title_activity_main">BBQ Thermometer</string>
+    <string name="package_name">app.bbqthermometer</string>
+    <string name="custom_url_scheme">app.bbqthermometer</string>
+</resources>
